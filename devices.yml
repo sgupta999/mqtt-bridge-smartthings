@@ -1,0 +1,313 @@
+---
+SNF-M7-Mosquitto:
+# device name - make sure it is exactly the same as in smartthings
+  subscribe:
+  # topic details to which smartthings will be subscribed
+  # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
+    smartthings/stat/SNF-M7/POWER:
+    # subscribe to this topic
+      attribute: power
+      # mapped to this attribute of device [e.g. switch, contact or here a custom attribute
+      # this attribute is specified in the capability map section of the mbs-smartapp
+      # an attribute is required for each attribute
+      command:
+      # Transfer payload coming from MQTT to this new payload* send to smartthings
+      # For e.g. here OFF command published from MQTT will be sent as off (lowercase) to smartthings
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M7/STATE:
+    # You can subscribe to as many topics - just make sure each topic has at least an attribute defined
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS5:
+      attribute: update
+  publish:
+  # commands (device, attribute, payload) from smartthings is send to MQTT as (topic, payload*)
+    power:
+    #attribute specified in the capability map section of the mbs-smartapp
+      topic: smartthings/cmnd/SNF-M7/POWER
+      # transforming payload from smartthings to the one sent to MQTT and physical device
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M7/Backlog
+      command:
+      # tasmota specific example of using Backlog to send multiple simultaneous commands to physical device
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  # false set as default and here
+  
+  
+  
+Tasmota Test:
+  subscribe:
+    smartthings/stat/SNF-M7/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M7/STATE:
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M7/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M7/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M7/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+Electricity Meter:
+  subscribe:
+    smartthings/emu2/mqttmsg:
+      attribute: mqttmsg
+    smartthings/emu2/demand:
+      attribute: demand
+  publish:
+    mqttmsg:
+      topic: smartthings/emu2/msghandler
+  retain: 'true'
+SNF-M2-Patio:
+  subscribe:
+    smartthings/stat/SNF-M2/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M2/STATE:
+      attribute: update
+    smartthings/stat/SNF-M2/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M2/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M2/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M2/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M2/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF-M3-LR-RSD:
+  subscribe:
+    smartthings/stat/SNF-M3/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M3/STATE:
+      attribute: update
+    smartthings/stat/SNF-M3/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M3/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M3/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M3/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M3/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF-M4-LR-FanLight:
+  subscribe:
+    smartthings/stat/SNF-M4/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M4/STATE:
+      attribute: update
+    smartthings/stat/SNF-M4/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M4/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M4/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M4/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M4/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF-M5-LR-Fan:
+  subscribe:
+    smartthings/stat/SNF-M5/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M5/STATE:
+      attribute: update
+    smartthings/stat/SNF-M5/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M5/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M5/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M5/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M5/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF-M6-PoolMotor:
+  subscribe:
+    smartthings/stat/SNF-M6/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF-M6/STATE:
+      attribute: update
+    smartthings/stat/SNF-M6/STATUS:
+      attribute: update
+    smartthings/stat/SNF-M6/STATUS2:
+      attribute: update
+    smartthings/stat/SNF-M6/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF-M6/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF-M6/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF1:
+  subscribe:
+    smartthings/stat/SNF1/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF1/STATE:
+      attribute: update
+    smartthings/stat/SNF1/STATUS:
+      attribute: update
+    smartthings/stat/SNF1/STATUS2:
+      attribute: update
+    smartthings/stat/SNF1/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF1/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF1/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF2:
+  subscribe:
+    smartthings/stat/SNF2/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF2/STATE:
+      attribute: update
+    smartthings/stat/SNF2/STATUS:
+      attribute: update
+    smartthings/stat/SNF2/STATUS2:
+      attribute: update
+    smartthings/stat/SNF2/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF2/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF2/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'
+  
+  
+  
+SNF3:
+  subscribe:
+    smartthings/stat/SNF3/POWER:
+      attribute: power
+      command:
+        'OFF': 'off'
+        'ON': 'on'
+    smartthings/tele/SNF3/STATE:
+      attribute: update
+    smartthings/stat/SNF3/STATUS:
+      attribute: update
+    smartthings/stat/SNF3/STATUS2:
+      attribute: update
+    smartthings/stat/SNF3/STATUS5:
+      attribute: update
+  publish:
+    power:
+      topic: smartthings/cmnd/SNF3/POWER
+      command:
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/SNF3/Backlog
+      command:
+        refresh: Status; Status 2; Status 5
+  retain: 'false'

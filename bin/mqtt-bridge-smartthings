@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+process.chdir(__dirname + '/../');
+console.log('Current Working Directory is ',process.cwd());
+require('../mbs-server.js');

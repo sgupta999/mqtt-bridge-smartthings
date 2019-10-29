@@ -1,0 +1,3 @@
+SC CREATE mqtt-bridge-smartthings Displayname= "mqtt-bridge-smartthings" binpath= "srvstart.exe mqtt-bridge-smartthings -c Z:mqtt-bridge-smartthings.ini" start= auto
+SC DELETE mqtt-bridge-smartthings 
+sc CONFIG mqtt-bridge-smartthings depend= mosquitto

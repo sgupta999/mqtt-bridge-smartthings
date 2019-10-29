@@ -1,0 +1,16 @@
+{
+    "preset": "node-style-guide",
+    "disallowMultipleVarDecl": false,
+    "validateIndentation": 4,
+    "disallowTrailingComma": true,
+    "requireTrailingComma": false,
+    "disallowSpacesInFunction": false,
+    "requireSpacesInFunction": {
+        "beforeOpeningCurlyBrace": true,
+        "beforeOpeningRoundBrace": true
+    },
+    "maximumLineLength": 120,
+    "excludeFiles": [
+        "artifacts/**"
+    ]
+}

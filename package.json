@@ -1,0 +1,55 @@
+{
+  "name": "mqtt-bridge-smartthings",
+  "version": "3.0.0",
+  "description": "MQTT Bridge to SmartThings [MBS]",
+  "main": "mbs-server.js",
+  "bin": {
+    "mqtt-bridge-smartthings": "./bin/mqtt-bridge-smartthings"
+  },
+  "scripts": {
+    "pretest": "npm run hint && npm run style",
+    "test": "jenkins-mocha",
+    "hint": "jshint --show-non-errors *.js",
+    "style": "jscs .",
+    "start": "node mbs-server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sgupta999/mqtt-bridge-smartthings"
+  },
+  "keywords": [
+    "smartthings",
+    "mqtt",
+    "broker",
+    "sonoff",
+    "tasmota"
+  ],
+  "author": "Sandeep Gupta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sgupta999/mqtt-bridge-smartthings/issues"
+  },
+  "homepage": "https://github.com/sgupta999/mqtt-bridge-smartthings",
+  "dependencies": {
+    "async": "^1.5.2",
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "express-joi-validator": "^2.0.0",
+    "express-winston": "^2.5.0",
+    "fs-extra": "^8.1.0",
+    "joi": "^13.4.0",
+    "js-yaml": "^3.4.3",
+    "jsonfile": "^2.2.3",
+    "mqtt": "^1.7.0",
+    "mqtt-wildcard": "^3.0.9",
+    "request": "^2.65.0",
+    "semver": "^5.1.0",
+    "winston": "^2.0.0",
+    "winston-daily-rotate-file": "^3.10.0"
+  },
+  "devDependencies": {
+    "jenkins-mocha": "^6.0.0",
+    "jscs": "^3.0.7",
+    "jshint": "^2.9.1"
+  }
+}
