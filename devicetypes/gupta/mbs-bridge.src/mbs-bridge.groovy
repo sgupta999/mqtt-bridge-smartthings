@@ -1,5 +1,5 @@
 /**
- *  MQTT Bridge To SmartThings - SmartThings Bridge Device Type
+ *  An MQTT bridge to SmartThings [MBS-Bridge] - SmartThings Bridge Device Handler
  *
  *  Authors
  *	 - sandeep gupta
@@ -77,7 +77,7 @@ def parse(String description) {
     def msg = parseLanMessage(description)
 	def message = new JsonOutput().toJson(msg.data)
     log.debug "Parsed '${message}'"
-    return createEvent(name: "message", value: message)
+    return createEvent(name: "message", value: message, isStateChange: 'true')
 }
 
 // Send message to the Bridge

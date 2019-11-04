@@ -1,42 +1,132 @@
 ---
+# Look for actual scenarios at the end without comments
+# Complete example of complex device setup with multiple subscriptions and commands
 Living Room Light:
 # device name - make sure it is exactly the same as in smartthings
-  subscribe:
-  # topic details to which smartthings will be subscribed
-  # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
-    smartthings/stat/sonoff-1/POWER:
-    # subscribe to this topic
-      attribute: power
-      # mapped to this attribute of device [e.g. switch, contact or here a custom attribute
-      # this attribute is specified in the capability map section of the mbs-smartapp
-      # an attribute is required for each attribute
-      command:
-      # Transfer payload coming from MQTT to this new payload* send to smartthings
-      # For e.g. here OFF command published from MQTT will be sent as off (lowercase) to smartthings
-        'OFF': 'off'
-        'ON': 'on'
-    smartthings/tele/sonoff-1/STATE:
-    # You can subscribe to as many topics - just make sure each topic has at least an attribute defined
-      attribute: update
-    smartthings/stat/sonoff-1/STATUS:
-      attribute: update
-    smartthings/stat/sonoff-1/STATUS2:
-      attribute: update
-    smartthings/stat/sonoff-1/STATUS5:
-      attribute: update
+  attribute: switch
+  # REQUIRED: mapped to an actual attribute of device [e.g. switch, contact or any custom attribute
+  # this attribute is specified in the capability map section of the mbs-smartapp
+  # an attribute is required for each topic subbscription
+      subscribe:
+      # topic details to which smartthings will be subscribed
+      # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
+        smartthings/stat/sonoff-1/POWER:
+        # OPTIONAL: subscribe to this topic, for tasmota you really need it to get status updates for third party on/off
+          command:
+          # OPTIONAL: Translate payload coming from MQTT to this new payload* send to smartthings
+          # For e.g. here OFF command published from MQTT will be sent as off (lowercase) to smartthings
+          # if not set payload from MQTT is sent as is
+            'OFF': 'off'
+            'ON': 'on'
+        smartthings/stat/sonoff-1/STATUS:
+        # You can subscribe to as many topics 
+        smartthings/stat/sonoff-1/STATUS2:
+        smartthings/stat/sonoff-1/STATUS5:
+        smartthings/stat/sonoff-1/STATUS11:
   publish:
-  # commands (device, attribute, payload) from smartthings is send to MQTT as (topic, payload*)
-    power:
-    #attribute specified in the capability map section of the mbs-smartapp
+  # OPTIONAL: commands (device, attribute, payload) from smartthings is send to MQTT as (topic, payload*)
+    switch:
+    #REQUIRED: attribute specified in the capability map section of the mbs-smartapp
       topic: smartthings/cmnd/sonoff-1/POWER
-      # transforming payload from smartthings to the one sent to MQTT and physical device
+      # REQUIRED: topic to be published to MQTT
       command:
+      # REQUIRED: transforming payload from smartthings to the one sent to MQTT and physical device
         'off': 'OFF'
         'on': 'ON'
     update:
       topic: smartthings/cmnd/sonoff-1/Backlog
       command:
       # tasmota specific example of using Backlog to send multiple simultaneous commands to physical device
-        refresh: Status; Status 2; Status 5
+        refresh: Status; Status 2; Status 5; Status 11
   retain: 'false'
   # false set as default and here
+  
+#
+#most simple tasmota switch using Smartthings Virtual Switch device Type
+Living Room Light:
+  subscribe:
+    switch:     
+        smartthings/stat/sonoff1/POWER:
+          command:
+            'OFF': 'off'
+            'ON': 'on'
+  publish:
+    switch:
+        smartthings/cmnd/sonoff1/POWER:
+  retain: 'false'  
+  
+#
+
+# example of RF Switch handled by Tasmota RF Bridge using Smartthings Virtual Switch device Type
+# run this rule on the RFBridge to get command 'rfsensor' for any RFReceived event
+#rule1 on rfreceived#data do publish rfbridge/%value%  rfsensor endon
+Living Room Light:
+  subscribe:
+    switch:
+        rfbridge/555ABC:
+          command:
+            'rfsensor': 'on'
+        rfbridge/555ADC:
+          command:
+            'rfsensor': 'off'
+  publish:
+    switch:
+        cmnd/rfbridge/Backlog:
+          command:
+            'on': 'RfSync 2390; RfLow 410; RfHigh 780; RfCode #555ABC'
+            'off': 'RfSync 2390; RfLow 2410; RfHigh 780; RfCode #555ADC'
+  retain: 'false' 
+#
+# RF Contact Sensor handled by Tasmota RF Bridge using Smartthings Simulated Contact Sensor device Type
+Mailbox:
+  subscribe:
+    contact: 
+        rfbridge/53620A:
+          command:
+            'rfsensor': 'open'
+        rfbridge/53620E:
+          command:
+            'rfsensor': 'closed'
+
+
+#
+#Complete example of Sonoff module running Tasmota using my custom Tasmota SwitchSensor Device Type
+Living Room Light:
+  subscribe:
+    switch:     
+        smartthings/stat/sonoff-1/POWER:
+          command:
+            'OFF': 'off'
+            'ON': 'on'
+    update:  
+        smartthings/tele/sonoff-1/LWT:
+        smartthings/stat/sonoff-1/STATUS:
+        smartthings/stat/sonoff-1/STATUS2:
+        smartthings/stat/sonoff-1/STATUS5:
+        smartthings/stat/sonoff-1/STATUS11:
+  publish:
+    switch:
+        smartthings/cmnd/sonoff-1/POWER:
+          command:
+            'off': 'OFF'
+            'on': 'ON'
+    update:
+      smartthings/cmnd/sonoff-1/Backlog:
+          command:
+            refresh: Status; Status 2; Status 5; Status 11
+  retain: 'false'
+  
+  
+#
+# Completely custom device using MQTT and custom device type
+#Electricity Meter
+Electricity Meter:
+  subscribe:
+    mqttmsg: 
+        smartthings/emu2/mqttmsg:
+    demand: 
+        smartthings/emu2/demand:
+  publish:
+    mqttmsg:
+      smartthings/emu2/msghandler:
+  retain: 'true' 

@@ -1,6 +1,6 @@
 {
   "name": "mqtt-bridge-smartthings",
-  "version": "3.0.0",
+  "version": "1.0.1",
   "description": "MQTT Bridge to SmartThings [MBS]",
   "main": "mbs-server.js",
   "bin": {
@@ -31,25 +31,24 @@
   },
   "homepage": "https://github.com/sgupta999/mqtt-bridge-smartthings",
   "dependencies": {
-    "async": "^1.5.2",
-    "body-parser": "^1.14.1",
-    "express": "^4.13.3",
-    "express-joi-validator": "^2.0.0",
-    "express-winston": "^2.5.0",
+    "async": "^3.1.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "express-joi-validator": "^2.0.1",
+    "express-winston": "^4.0.1",
     "fs-extra": "^8.1.0",
-    "joi": "^13.4.0",
-    "js-yaml": "^3.4.3",
-    "jsonfile": "^2.2.3",
-    "mqtt": "^1.7.0",
+    "joi": "^14.3.1",
+    "js-yaml": "^3.13.1",
+    "jsonfile": "^5.0.0",
+    "mqtt": "^3.0.0",
     "mqtt-wildcard": "^3.0.9",
-    "request": "^2.65.0",
-    "semver": "^5.1.0",
-    "winston": "^2.0.0",
-    "winston-daily-rotate-file": "^3.10.0"
+    "request": "^2.88.0",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^4.2.1"
   },
   "devDependencies": {
-    "jenkins-mocha": "^6.0.0",
+    "jenkins-mocha": "^8.0.0",
     "jscs": "^3.0.7",
-    "jshint": "^2.9.1"
+    "jshint": "^2.10.2"
   }
 }

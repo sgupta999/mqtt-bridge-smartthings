@@ -1,50 +1,60 @@
-# SmartThings MQTT Bridge
-***System to share and control SmartThings device states in MQTT.***
+# MQTT Bridge to SmartThings [MBS]
+***Broker between Smartthings and MQTT Broker.***
 
-[![GitHub Tag](https://img.shields.io/github/tag/stjohnjohnson/smartthings-mqtt-bridge.svg)](https://github.com/stjohnjohnson/smartthings-mqtt-bridge/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/stjohnjohnson/smartthings-mqtt-bridge.svg)](https://hub.docker.com/r/stjohnjohnson/smartthings-mqtt-bridge/)
-[![Docker Stars](https://img.shields.io/docker/stars/stjohnjohnson/smartthings-mqtt-bridge.svg)](https://hub.docker.com/r/stjohnjohnson/smartthings-mqtt-bridge/)
-[![Wercker Status](https://app.wercker.com/status/f2df197ea40f89b7eda771e67b4a4e1e/s/master "wercker status")](https://app.wercker.com/project/bykey/f2df197ea40f89b7eda771e67b4a4e1e)
-[![Gitter](https://badges.gitter.im/stjohnjohnson/smartthings-mqtt-bridge.svg)](https://gitter.im/stjohnjohnson/smartthings-mqtt-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Donate](https://img.shields.io/badge/donate-bitcoin-yellow.svg)](#donate)
+[![GitHub Tag](https://img.shields.io/github/tag/sgupta999/mqtt-bridge-smartthings.svg)](https://github.com/sgupta999/mqtt-bridge-smartthings/releases)
 
-This project was spawned by the desire to [control SmartThings from within Home Assistant][ha-issue].  Since Home Assistant already supports MQTT, we chose to go and build a bridge between SmartThings and MQTT.
+This is an upate from the [smartthings-mqtt-broker](https://github.com/stjohnjohnson/smartthings-mqtt-bridge) orginally developed by St. John Johnson.  (https://github.com/stjohnjohnson/smartthings-mqtt-bridge). I have borrowed with abandon from his work, both in compiling this readme; and the server/client codeset, so a big thank you to him.
+
+The primary motivation was having a pure MQTT solution for Tasmota devices in Smartthings. Unfortunately, the old solution was more targeted towards HASS-IO integration. Most of the architecture and basic concepts remain the same but significant refactoring and changes have been made.
 
 # Architecture
 
 ![Architecture](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU21hcnRUaGluZ3MgPC0-IE1RVFQgCgpwYXJ0aWNpcGFudCBaV2F2ZSBMaWdodAoKAAcGTW90aW9uIERldGVjdG9yLT5TVCBIdWI6ABEIRXZlbnQgKFotV2F2ZSkKABgGACEFTVFUVEJyaWRnZSBBcHA6IERldmljZSBDaGFuZ2UAMAhHcm9vdnkAMwUAIg4AMxAAOAY6IE1lc3NhADYKSlNPTgAuEABjBi0-AHYLU2VyADkGAHAVUkVTVCkKAB0SAD0GIEJyb2tlcgCBaQk9IHRydWUgKE1RVFQpCgAyBQAcBwBdFgCCSgUgPSAib24iAC4IAFgUAIFaFgCBFhsAgWAWAIJnEwCCESMAgmoIAINWBVR1cm4AgTAHT24AgxcNAINXBQCEGwsAgVYIT24Ag3oJ&s=default)
 
-# MQTT Events
+# Compatibility
+The new server should be fully backward compatible. If you have been using the old library you should still be able to use and avail of all the new functionality.
 
-Events about a device (power, level, switch) are sent to MQTT using the following format:
+# Updates
+1. An external devices YAML config file has been introduced. It allows to define any custom mapping between and smartthings [device][attribute][command] and MQTT [topic][payload] and vice-versa.
+2. A device can subscribe and publish to any number of topics
+3. MQTT wildcards can be used in subscribe topics
+4. Within smartthings. smartapp and device handlers have a generic processMQTT method to process subscription messages. Smartthings attribute 'events' are use to pubish messages to MQTT broker
+5. The logging and configurations have beem significantly streamlined. 'Log' and 'Data' directories store logs and state information
+6. All dependencies have been updated to the latest versions.
+7. The use case tested was for primarily Tasmota devices. I have a lite and full version of the SmartApp and sample tasmota Device Type Handlers. Use the 'lite' version if you are primary interested in configuring devices using the external device config file and primarily using Tasmota device handlers provided with this package. 
+8. The Tasmota Device Type Handlers periodically update other information from device like SSID, RSSI, LWT etc. If you use the SmartThings virtual switches or contact sensors they will just process the commands
 
-```
-{PREFACE}/{DEVICE_NAME}/${ATTRIBUTE}
-```
-__PREFACE is defined as "smartthings" by default in your configuration__
 
-For example, my Dimmer Z-Wave Lamp is called "Fireplace Lights" in SmartThings.  The following topics are published:
+# MQTT Events Flow
+While the original flow is preserved as is - a new flow has been introduced to make the bridge more flexible. Please read the original readme on the previous project for the original flow. The new flow is as follows:
 
-```
-# Brightness (0-99)
-smartthings/Fireplace Lights/level
-# Switch State (on|off)
-smartthings/Fireplace Lights/switch
-```
+1. Smartthings events are generated from attributes - both standard and custom. You may choose to define custom attriutes for handling functionality beyond standard attributes - e.g combo devices or more functional tiles
+2. Within the 'MBS - SmartApp' you describe a capability map and specify which attribute(s) (and corresponding event(s)), the SmartApp will subscribe to.
+3. For every event Smartthings generates a [device][attribute][command] event package that the SmartApp is subscribed to and sends it to the mbs-server.
+4. The devices.yml config file maintains a mapping of [device][attribute][command] to the MQTT [topic][payload] to be published.
+5. Once the server receives the event from Smartthings, if the device is in the config file it uses the mapping to publish to MQTT broker. If the device is not in the device config file it assumes the standard old flow and publishes a message {PREFACE}/{DEVICE_NAME}/${ATTRIBUTE}/SUFFIX corresponding to the old flow.
+6. On the flip side, when the server receives an MQTT message from the broker, it checks the device config file for mapping of [topic][payload] to [device][attribute][command] and sends the command back to Smartthings. If device is not found it follows the old flow.
+7. Smartthings MBS-SmartApp maintains  mappings for each capability of what attribute[event] to subscribe (for publishing to MQTT Broker) and what action method to call for an event received form the MQTT broker via the MBS-Server. See [_smartapp.example.md](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_smartapp.example)
 
-The Bridge also subscribes to changes in these topics, so that you can update the device via MQTT.
-
-```
-$ mqtt pub -t 'smartthings/Fireplace Lights/switch'  -m 'off'
-# Light goes off in SmartThings
-```
+Please read the [SmartApp example](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_smartapp.example). The MBS-SmartApp controls the mappings between the Devices and the Server config. A lot of flexibility for advanced configuration has been built in, but it can also be used without any configuration for the basic switches and sensors.
 
 # Configuration
 
-The bridge has one yaml file for configuration:
+The bridge has two yaml files for configuration:
 
+[config.yml](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/config.yml)
+==========
 ```
 ---
+# Port number to listen on
+port: 8080
+
+#Default (info) - error, warn, info, verbose, debug, silly
+loglevel: "info"
+        
+#is there an external device config file: true, false
+deviceconfig: true
+
 mqtt:
     # Specify your MQTT Broker URL here
     host: mqtt://localhost
@@ -74,130 +84,89 @@ mqtt:
     # MQTT retains state changes be default, retain mode can be disabled:
     # retain: false
 
-# Port number to listen on
-port: 8080
 
+```
+[devices.yml](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_devices.example.yml)
+===========
+```
+---
+# Look for actual scenarios at the end without comments
+# Complete example of complex device setup with multiple subscriptions and commands
+Living Room Light:
+# device name - make sure it is exactly the same as in smartthings
+  attribute: switch
+  # REQUIRED: mapped to an actual attribute of device [e.g. switch, contact or any custom attribute
+  # this attribute is specified in the capability map section of the mbs-smartapp
+  # an attribute is required for each topic subbscription
+      subscribe:
+      # topic details to which smartthings will be subscribed
+      # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
+        smartthings/stat/sonoff-1/POWER:
+        # OPTIONAL: subscribe to this topic, for tasmota you really need it to get status updates for third party on/off
+          command:
+          # OPTIONAL: Translate payload coming from MQTT to this new payload* send to smartthings
+          # For e.g. here OFF command published from MQTT will be sent as off (lowercase) to smartthings
+          # if not set payload from MQTT is sent as is
+            'OFF': 'off'
+            'ON': 'on'
+        smartthings/stat/sonoff-1/STATUS:
+        # You can subscribe to as many topics 
+        smartthings/stat/sonoff-1/STATUS2:
+        smartthings/stat/sonoff-1/STATUS5:
+        smartthings/stat/sonoff-1/STATUS11:
+  publish:
+  # OPTIONAL: commands (device, attribute, payload) from smartthings is send to MQTT as (topic, payload*)
+    switch:
+    #REQUIRED: attribute specified in the capability map section of the mbs-smartapp
+      topic: smartthings/cmnd/sonoff-1/POWER
+      # REQUIRED: topic to be published to MQTT
+      command:
+      # REQUIRED: transforming payload from smartthings to the one sent to MQTT and physical device
+        'off': 'OFF'
+        'on': 'ON'
+    update:
+      topic: smartthings/cmnd/sonoff-1/Backlog
+      command:
+      # tasmota specific example of using Backlog to send multiple simultaneous commands to physical device
+        refresh: Status; Status 2; Status 5; Status 11
+  retain: 'false'
+  # false set as default and here
 ```
 
 # Installation
-
-There are two ways to use this, Docker (self-contained) or NPM (can run on Raspberry Pi).
-
-## Docker
-
-Docker will automatically download the image, but you can "install" it or "update" it via `docker pull`:
-```
-$ docker pull stjohnjohnson/smartthings-mqtt-bridge
-```
-
-To run it (using `/opt/mqtt-bridge` as your config directory and `8080` as the port):
-```
-$ docker run \
-    -d \
-    --name="mqtt-bridge" \
-    -v /opt/mqtt-bridge:/config \
-    -p 8080:8080 \
-    stjohnjohnson/smartthings-mqtt-bridge
-```
-
-To restart it:
-```
-$ docker restart mqtt-bridge
-```
 
 ## NPM
 
 To install the module, just use `npm`:
 ```
-$ npm install -g smartthings-mqtt-bridge
+$ npm install -g mqtt-bridge-smartthings
 ```
 
 If you want to run it, you can simply call the binary:
 ```
 $ smartthings-mqtt-bridge
-Starting SmartThings MQTT Bridge - v1.1.3
+Starting SmartThings MQTT Bridge - v1.0.1
 Loading configuration
 No previous configuration found, creating one
 ```
 
-Although we recommend using a process manager like [PM2][pm2]:
-```
-$ pm2 start smartthings-mqtt-bridge
-[PM2] Starting smartthings-mqtt-bridge in fork_mode (1 instance)
-[PM2] Done.
-┌─────────────────────────┬────┬──────┬───────┬────────┬─────────┬────────┬────────────┬──────────┐
-│ App name                │ id │ mode │ pid   │ status │ restart │ uptime │ memory     │ watching │
-├─────────────────────────┼────┼──────┼───────┼────────┼─────────┼────────┼────────────┼──────────┤
-│ smartthings-mqtt-bridge │ 1  │ fork │ 20715 │ online │ 0       │ 0s     │ 7.523 MB   │ disabled │
-└─────────────────────────┴────┴──────┴───────┴────────┴─────────┴────────┴────────────┴──────────┘
-
-$ pm2 logs smartthings-mqtt-bridge
-smartthings-mqtt-bridge-1 (out): info: Starting SmartThings MQTT Bridge - v1.1.3
-smartthings-mqtt-bridge-1 (out): info: Loading configuration
-smartthings-mqtt-bridge-1 (out): info: No previous configuration found, creating one
-
-$ pm2 restart smartthings-mqtt-bridge
-```
+If you are interested in running it on windows as a server the windows service directory has instructions and sample .ini file and .bat file with commands.
 
 ## Usage
-1. Customize the MQTT host
+1. Customize the MQTT host and devices
     ```
     $ vi config.yml
+     $ vi devices.yml
     # Restart the service to get the latest changes
     ```
 
-2. Install the [Device Handler][dt] in the [Device Handler IDE][ide-dt] using "Create via code"
-3. Add the "MQTT Device" device in the [My Devices IDE][ide-mydev]. Enter MQTT Device (or whatever) for the name. Select "MQTT Bridge" for the type. The other values are up to you.
-4. Configure the "MQTT Device" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the Docker container
-4. Install the [Smart App][app] on the [Smart App IDE][ide-app] using "Create via code"
-5. Configure the Smart App (via the Native App) with the devices you want to share and the Device Handler you just installed as the bridge
-6. Via the Native App, select your MQTT device and watch as MQTT is populated with events from your devices
+2. Install the [MBS-Bridge Device Handler](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/devicetypes/gupta/mbs-bridge.src/mbs-bridge.groovy) in the [Device Handler IDE][ide-dt] using "Create via code"
+3. Add the "MQTT Bridge" device in the [My Devices IDE][ide-mydev]. Enter MQTT Bridge (or whatever) for the name. Select "MBS Bridge" for the type. 
+4. Configure the "MQTT Bridge" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the mbs-server container
+4. Install the [MBS SmartApp Lite](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-lite.groovy) or [MBS SmartApp Full](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-full.groovy)on the [Smart App IDE][ide-app] using "Create via code"
+5. If using a Tasmota device install the [Tasmota SwitchSensor] or any other Tamota device from the [Tasmota Device Type] folder.
+5. Configure the Smart App (via the Native App) with the devices you want to subscribe to and the bridge that you just installed
+6. Via the Native App, select your MQTT device and watch as device is populated with events from your devices
 
-## Advanced
-### Docker Compose
 
-If you want to bundle everything together, you can use [Docker Compose][docker-compose].
 
-Just create a file called `docker-compose.yml` with this contents:
-```yaml
-mqtt:
-    image: matteocollina/mosca
-    ports:
-        - 1883:1883
-
-mqttbridge:
-    image: stjohnjohnson/smartthings-mqtt-bridge
-    volumes:
-        - ./mqtt-bridge:/config
-    ports:
-        - 8080:8080
-    links:
-        - mqtt
-
-homeassistant:
-    image: balloob/home-assistant
-    ports:
-        - 80:80
-    volumes:
-        - ./home-assistant:/config
-        - /etc/localtime:/etc/localtime:ro
-    links:
-        - mqtt
-```
-
-This creates a directory called `./mqtt-bridge/` to store configuration for the bridge.  It also creates a directory `./home-assistant` to store configuration for HA.
-
-## Donate
-
-If you use and love our bridge tool, please consider buying us a coffee by sending some Satoshi to `1sBPcBai7gZco6LipPthuyZ5rH4RKx1Bg`.
-
-[![Donate Bitcoin](http://i.imgur.com/VJomBaC.png)](https://coinbase.com/stjohn)
-
- [dt]: https://github.com/stjohnjohnson/smartthings-mqtt-bridge/blob/master/devicetypes/stj/mqtt-bridge.src/mqtt-bridge.groovy
- [app]: https://github.com/stjohnjohnson/smartthings-mqtt-bridge/blob/master/smartapps/stj/mqtt-bridge.src/mqtt-bridge.groovy
- [ide-dt]: https://graph.api.smartthings.com/ide/devices
- [ide-mydev]: https://graph.api.smartthings.com/device/list
- [ide-app]: https://graph.api.smartthings.com/ide/apps
- [ha-issue]: https://github.com/balloob/home-assistant/issues/604
- [docker-compose]: https://docs.docker.com/compose/
- [pm2]: http://pm2.keymetrics.io/
