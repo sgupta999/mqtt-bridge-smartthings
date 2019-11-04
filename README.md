@@ -36,7 +36,9 @@ While the original flow is preserved as is - a new flow has been introduced to m
 6. On the flip side, when the server receives an MQTT message from the broker, it checks the device config file for mapping of [topic][payload] to [device][attribute][command] and sends the command back to Smartthings. If device is not found it follows the old flow.
 7. Smartthings MBS-SmartApp maintains  mappings for each capability of what attribute[event] to subscribe (for publishing to MQTT Broker) and what action method to call for an event received form the MQTT broker via the MBS-Server. See [_smartapp.example.md](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_smartapp.example)
 
-Please read the [SmartApp example](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_smartapp.example). The MBS-SmartApp controls the mappings between the Devices and the Server config. A lot of flexibility for advanced configuration has been built in, but it can also be used without any configuration for the basic switches and sensors.
+# [SmartApp example](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/_smartapp.example). 
+Please read this to ensure appropriate configuration.
+The MBS-SmartApp controls the mappings between the Devices and the Server config. A lot of flexibility for advanced configuration has been built in, but it can also be used without any configuration for the basic switches and sensors.
 
 # Configuration
 
