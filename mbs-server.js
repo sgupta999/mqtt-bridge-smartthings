@@ -44,6 +44,7 @@ var winston = require('winston'),
     request = require('request'),
 	path = require('path'),
 	CONFIG_DIR = __dirname,
+    SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
     CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml')	;
 	
 	function loadConfiguration () {
@@ -57,7 +58,6 @@ var winston = require('winston'),
 
 var config = loadConfiguration(),
 	DEVICE_CONFIG_FILE = path.join(CONFIG_DIR, 'devices.yml'),
-    SAMPLE_FILE = path.join(__dirname, '_config.yml'),
     STATE_FILE = path.join(CONFIG_DIR, 'data', 'state.json'),
     STATE_SUMMARY_FILE = path.join(CONFIG_DIR, 'data', 'state.summary.json'),
     CURRENT_VERSION = require('./package').version,
