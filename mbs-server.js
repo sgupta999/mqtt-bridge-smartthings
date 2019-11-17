@@ -43,8 +43,8 @@ var winston = require('winston'),
 	mqttWildcard = require('mqtt-wildcard'),
     request = require('request'),
 	path = require('path'),
-    SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
 	CONFIG_DIR = __dirname,
+    SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
     CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml')	;
 	
 	function loadConfiguration () {
@@ -402,10 +402,10 @@ function handleSubscribeEvent (req, res) {
 	}
 }
 
-function comparearrays(master, slave){
+function comparearrays(arr1, arr2){
 	var newarray = [];
-	slave.forEach (function (sub){
-		if (!master.includes(sub)) newarray.push(sub);
+	arr2.forEach (function (sub){
+		if (!arr1.includes(sub)) newarray.push(sub);
 	});
 	return newarray;
 }
