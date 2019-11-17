@@ -43,8 +43,8 @@ var winston = require('winston'),
 	mqttWildcard = require('mqtt-wildcard'),
     request = require('request'),
 	path = require('path'),
-	CONFIG_DIR = __dirname,
     SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
+	CONFIG_DIR = __dirname,
     CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml')	;
 	
 	function loadConfiguration () {
@@ -450,7 +450,7 @@ function isSubscribed(topic){
 	for (i=0; i< subscriptions.length; i++){
 		if (subscriptions[i] == topic) {		
 			return subscriptions[i];		}
-		if (mqttWildcard(topic, subscriptions[i]) != null) return key;		
+		if (mqttWildcard(topic, subscriptions[i]) != null) return subscriptions[i];		
 	}
 	return null;
 }
