@@ -3,13 +3,13 @@
 # Complete example of complex device setup with multiple subscriptions and commands
 Living Room Light:
 # device name - make sure it is exactly the same as in smartthings
-  attribute: switch
-  # REQUIRED: mapped to an actual attribute of device [e.g. switch, contact or any custom attribute
-  # this attribute is specified in the capability map section of the mbs-smartapp
-  # an attribute is required for each topic subbscription
-      subscribe:
-      # topic details to which smartthings will be subscribed
-      # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
+  subscribe:
+  # topic details to which smartthings will be subscribed
+  # (topic, payload) from MQTT will be transformed to (device, attribute, payload*) to smartthings
+      switch:
+      # REQUIRED: mapped to an actual attribute of device [e.g. switch, contact or any custom attribute
+      # this attribute is specified in the capability map section of the mbs-smartapp
+      # an attribute is required for each topic subbscription      
         smartthings/stat/sonoff-1/POWER:
         # OPTIONAL: subscribe to this topic, for tasmota you really need it to get status updates for third party on/off
           command:
@@ -27,17 +27,17 @@ Living Room Light:
   # OPTIONAL: commands (device, attribute, payload) from smartthings is send to MQTT as (topic, payload*)
     switch:
     #REQUIRED: attribute specified in the capability map section of the mbs-smartapp
-      topic: smartthings/cmnd/sonoff-1/POWER
+      smartthings/cmnd/sonoff-1/POWER:
       # REQUIRED: topic to be published to MQTT
-      command:
-      # REQUIRED: transforming payload from smartthings to the one sent to MQTT and physical device
-        'off': 'OFF'
-        'on': 'ON'
+        command:
+        # REQUIRED: transforming payload from smartthings to the one sent to MQTT and physical device
+          'off': 'OFF'
+          'on': 'ON'
     update:
-      topic: smartthings/cmnd/sonoff-1/Backlog
-      command:
-      # tasmota specific example of using Backlog to send multiple simultaneous commands to physical device
-        refresh: Status; Status 2; Status 5; Status 11
+      smartthings/cmnd/sonoff-1/Backlog:
+        command:
+        # tasmota specific example of using Backlog to send multiple simultaneous commands to physical device
+          refresh: Status; Status 2; Status 5; Status 11
   retain: 'false'
   # false set as default and here
   
