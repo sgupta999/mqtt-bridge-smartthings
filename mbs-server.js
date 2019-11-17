@@ -266,7 +266,7 @@ function saveState () {
 		subscribe: Object.keys(subscribe),
 		publications: Object.keys(publications),
         history: history,
-		devices: Object.keys(devices)
+		devices: (devices) ? Object.keys(devices) : devices
     }, {
         spaces: 4
     });
@@ -346,7 +346,7 @@ function mqttPublish(device, attribute, topic, value, retain, res){
 function handleSubscribeEvent (req, res) {
     // Subscribe to all events
 	var oldsubscriptions = subscriptions;
-	devices = loadDeviceConfiguration();
+	devices = (config.deviceconfig) ? loadDeviceConfiguration() : {};
 	subscriptions = [];
     Object.keys(req.body.devices).forEach(function (property) {
 		winston.debug('Property - %s ', property);
