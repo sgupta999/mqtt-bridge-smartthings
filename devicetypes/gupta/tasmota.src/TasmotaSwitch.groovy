@@ -41,14 +41,14 @@ metadata {
     }
 
     tiles {	
-		multiAttributeTile(name:"main", type: "device.switch", width: 6, height: 4){
+		multiAttributeTile(name:"main", type: "device.switch", width: 6, height: 4, canChangeIcon: 'true', canChangeBackground : 'true' ){
 			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
 				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC"
 				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
 			}		
 				
 			tileAttribute("device.device_details", key: "SECONDARY_CONTROL") {
-				attributeState("default", action: "refresh", label: '${currentValue}', icon:"st.secondary.refresh-icon")				
+				attributeState("default", action: "refresh", label: '${currentValue}', icon:"https://github.com/sgupta999/GuptaSmartthingsRepository/raw/master/icons/refresh.png")				
                 attributeState("refresh", label: 'Updating data from server...')
 			}
 		}
@@ -190,6 +190,7 @@ def updateTiles(Object val ){
 		//log.debug "Are updates ready ${state.update1}, ${state.update2}, ${state.update3}, ${state.update4}"
 		//log.debug "Time is  ${state.currentTimestamp}"	
 		if (state.update1 && state.update2 && state.update3 && state.update4){
+			state.update1 = state.update2 = state.update3 = state.update4 = false;	
 			runIn(3,fireEvents)
 		}	
 }
