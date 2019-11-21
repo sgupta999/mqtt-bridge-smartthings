@@ -1,6 +1,6 @@
 {
   "name": "mqtt-bridge-smartthings",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MQTT Bridge to SmartThings [MBS]",
   "main": "mbs-server.js",
   "bin": {
@@ -34,10 +34,10 @@
     "async": "^3.1.0",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
-    "express-joi-validator": "^2.0.1",
+    "express-joi-validation": "^4.0.3",
     "express-winston": "^4.0.1",
     "fs-extra": "^8.1.0",
-    "joi": "^14.3.1",
+    "@hapi/joi": "^16.1.7",
     "js-yaml": "^3.13.1",
     "jsonfile": "^5.0.0",
     "mqtt": "^3.0.0",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "jenkins-mocha": "^8.0.0",
-    "jscs": "^3.0.7",
+    "eslint": "^6.6.0",
     "jshint": "^2.10.2"
   }
 }

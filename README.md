@@ -18,7 +18,7 @@ The new server should be fully backward compatible. If you have been using the o
 1. An external devices YAML config file has been introduced. It allows to define any custom mapping between and smartthings [device][attribute][command] and MQTT [topic][payload] and vice-versa.
 2. A device can subscribe and publish to any number of topics
 3. MQTT wildcards can be used in subscribe topics
-4. Within smartthings. smartapp and device handlers have a generic processMQTT method to process subscription messages. Smartthings attribute 'events' are use to pubish messages to MQTT broker
+4. Within smartthings. smartapp and device handlers have a generic processMQTT method to process subscription messages. Smartthings attribute 'events' are use to publish messages to MQTT broker
 5. The logging and configurations have beem significantly streamlined. 'Log' and 'Data' directories store logs and state information
 6. All dependencies have been updated to the latest versions.
 7. The use case tested was for primarily Tasmota devices. I have a lite and full version of the SmartApp and sample tasmota Device Type Handlers. Use the 'lite' version if you are primary interested in configuring devices using the external device config file and primarily using Tasmota device handlers provided with this package. 
@@ -42,7 +42,7 @@ The MBS-SmartApp controls the mappings between the Devices and the Server config
 
 # Configuration
 
-The bridge has two yaml files for configuration:
+The bridge has two yaml files for configuration. The config files need to be stored in the config directory. You can specify a CONFIG_DIR environment variable to specify where the config directory or it will default to locating the config directory in the same folder where mbs-server. This is a change form vesions 1.02 and earlier where confif files were not in a separate sub-directory
 
 [config.yml](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/config.yml)
 ==========
@@ -137,6 +137,8 @@ Living Room Light:
 
 # Installation
 
+since version 1.0.3 I have uploaded docker images for alpine linux distro and raspberry pi distro to docker hub. Please see detailed instructions for Docker installation in [DOCKER.md](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/DOCKER.md)
+
 ## NPM
 
 To install the module, just use `npm`:
@@ -164,11 +166,12 @@ If you are interested in running it on windows as a server the windows service d
 
 2. Install the [MBS-Bridge Device Handler](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/devicetypes/gupta/mbs-bridge.src/mbs-bridge.groovy) in the [Device Handler IDE][ide-dt] using "Create via code"
 3. Add the "MQTT Bridge" device in the [My Devices IDE][ide-mydev]. Enter MQTT Bridge (or whatever) for the name. Select "MBS Bridge" for the type. 
-4. Configure the "MQTT Bridge" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the mbs-server container
-4. Install the [MBS SmartApp Lite](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-lite.groovy) or [MBS SmartApp Full](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-full.groovy)on the [Smart App IDE][ide-app] using "Create via code"
-5. If using a Tasmota device install the [Tasmota SwitchSensor] or any other Tamota device from the [Tasmota Device Type] folder.
-5. Configure the Smart App (via the Native App) with the devices you want to subscribe to and the bridge that you just installed
-6. Via the Native App, select your MQTT device and watch as device is populated with events from your devices
+4. Configure the "MQTT Bridge" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the mbs-server processm service or docker container
+5. If ST is receiving messages from the bridge but the bridge is not receiving any messages from ST then most liley IP Address, Port, and MAC Address configuration is not correct
+6. Install the [MBS SmartApp Lite](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-lite.groovy) or [MBS SmartApp Full](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-full.groovy)on the [Smart App IDE][ide-app] using "Create via code"
+7. If using a Tasmota device install the [Tasmota SwitchSensor] or any other Tamota device from the [Tasmota Device Type] folder.
+8. Configure the Smart App (via the Native App) with the devices you want to subscribe to and the bridge that you just installed
+9. Via the Native App, select your MQTT device and watch as device is populated with events from your devices
 
 
 

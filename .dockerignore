@@ -1,0 +1,17 @@
+node_modules
+bin
+config
+devicetypes
+helpers
+smartapps
+windows service
+test
+.jscsrc
+.git
+.gitignore
+*.log
+Dockerfile*
+docker-compose*
+*.md
+LICENSE
+.vscode

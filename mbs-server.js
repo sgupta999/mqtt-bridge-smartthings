@@ -30,20 +30,20 @@ const { combine, timestamp, label, printf } = logform.format;
 var winston = require('winston'),
 	daily = require('winston-daily-rotate-file'),
     express = require('express'),
-    expressJoi = require('express-joi-validator'),
+    expressJoi = require('express-joi-validation').createValidator({}),
     expressWinston = require('express-winston'),
     bodyparser = require('body-parser'),
     mqtt = require('mqtt'),
     async = require('async'),
     url = require('url'),
-    joi = require('joi'),
+    joi = require('@hapi/joi'),
     yaml = require('js-yaml'),
     jsonfile = require('jsonfile'),
     fs = require('fs-extra'),
 	mqttWildcard = require('mqtt-wildcard'),
     request = require('request'),
 	path = require('path'),
-	CONFIG_DIR = __dirname,
+	CONFIG_DIR =  process.env.CONFIG_DIR || path.join(__dirname,'config'),
     SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
     CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml')	;
 	
@@ -80,6 +80,7 @@ var app = express(),
 	subscribe = {},
     callback = '',
 	devices = {},
+	st_request = {},
     history = {};
   
 // winston transports
@@ -235,6 +236,7 @@ function loadSavedState () {
 			subscribe: {},
 			publications: {},
             history: {},
+			st_request:{},
 			devices: {}
         };
     }
@@ -255,6 +257,7 @@ function saveState () {
 		subscribe: subscribe,
 		publications: publications,
         history: history,
+		st_request: st_request,
 		devices: devices
     }, {
         spaces: 4
@@ -346,17 +349,40 @@ function mqttPublish(device, attribute, topic, value, retain, res){
 function handleSubscribeEvent (req, res) {
     // Subscribe to all events
 	var oldsubscriptions = subscriptions;
-	devices = (config.deviceconfig) ? loadDeviceConfiguration() : {};
+	st_request = req.body.devices;
+	processSubscriptions(st_request);
+    // Store callback
+    callback = req.body.callback;
+	// Store current state on disk    
+	saveState();
+	var unsubs 	= comparearrays(subscriptions, oldsubscriptions),
+		subs 	= comparearrays(oldsubscriptions, subscriptions);
+	if ((!!unsubs) && (unsubs.length > 0)) client.unsubscribe(unsubs);
+	if ((!!subs) && (subs.length > 0)) {
+		winston.info('We are mqtt subscribing');
+			client.subscribe( subs , function () {
+			res.send({
+				status: 'OK'
+			});
+		});
+	}
+}
+
+function processSubscriptions(req){	
+	if (config.deviceconfig) {
+		winston.info('Loading Device configuration');
+		devices = loadDeviceConfiguration();
+	}
 	subscriptions = [];
-    Object.keys(req.body.devices).forEach(function (property) {
+    Object.keys(req).forEach(function (property) {
 		winston.debug('Property - %s ', property);
-        req.body.devices[property].forEach(function (device) {
+        req[property].forEach(function (device) {
 			winston.debug(' %s - %s ', property, device);			
 			// CRITICAL - if device in DEVICE_CONFIG_FILE, file sub/pub info will supercedes
 			if ((!!devices[device])) {
 				if ((!!devices[device]["subscribe"]) && (!!devices[device]["subscribe"][property])){	
-					Object.keys(devices[device]["subscribe"][property]).forEach (function (sub){						
-						subscriptions.push(sub);
+					Object.keys(devices[device]["subscribe"][property]).forEach (function (sub){	
+						if (!subscriptions.includes(sub)) subscriptions.push(sub);	
 						winston.debug('Subscribing[CUSTOM] ', sub);
 					});
 				}
@@ -378,31 +404,15 @@ function handleSubscribeEvent (req, res) {
 			}
         });
     });
-
-    // Store callback
-    callback = req.body.callback;
-
-	// Subscribe to events
-	
+	// Subscribe to events	
     winston.info('===================================ACTUAL SUBSCRIPTIONS REQUESTED FROM SMARTAPP ============================================');
     winston.info('Currently subscribed to ' + subscriptions.join(', '));
     winston.info('============================================================================================================================');
-    
-	// Store current state on disk    
-	saveState();
-	var unsubs 	= comparearrays(subscriptions, oldsubscriptions),
-		subs 	= comparearrays(oldsubscriptions, subscriptions);
-	if (unsubs.length > 0 ) client.unsubscribe(unsubs);
-	if (subs.length > 0) {
-			client.subscribe( subs , function () {
-			res.send({
-				status: 'OK'
-			});
-		});
-	}
 }
 
 function comparearrays(arr1, arr2){
+	if (!arr2) return null;
+	if (!arr1) return arr2;
 	var newarray = [];
 	arr2.forEach (function (sub){
 		if (!arr1.includes(sub)) newarray.push(sub);
@@ -446,13 +456,14 @@ function getTopicFor (device, property, type) {
  */
 function isSubscribed(topic){
 	if (!subscriptions) return null;
+	var topics = []
 	var i;
 	for (i=0; i< subscriptions.length; i++){
-		if (subscriptions[i] == topic) {		
-			return subscriptions[i];		}
-		if (mqttWildcard(topic, subscriptions[i]) != null) return subscriptions[i];		
+		if (subscriptions[i] == topic) {
+			topics.push(subscriptions[i]);
+		}else if (mqttWildcard(topic, subscriptions[i]) != null) topics.push(subscriptions[i]);		
 	}
-	return null;
+	return topics ;
 }
 
 
@@ -462,80 +473,87 @@ function isSubscribed(topic){
  * @param  {String} topic   Topic channel the event came from
  * @param  {String} message Contents of the event
  */
-function parseMQTTMessage (topic, message) {
+function parseMQTTMessage (incoming, message) {
     var contents = message.toString();
-    winston.debug('From MQTT: %s = %s', topic, contents);
-	var newtopic = isSubscribed(topic);
+    winston.debug('From MQTT: %s = %s', incoming, contents);
+	var topics = isSubscribed(incoming);
 	var device, property, cmd, value;
-	if (!newtopic)  {
-		winston.warn('%s-%s not subscribed. State error. Ignoring. ', topic, contents);
+	if (!topics)  {
+		winston.warn('%s-%s not subscribed. State error. Ignoring. ', incoming, contents);
 		return;
 	}
-	topic = newtopic;
+	if (topics.length > 1) winston.info('Incoming topic maps to multiple subscriptions: %s = %s', incoming, topics);
 	// Topic is subscribe to
-	if ((!!topic) && (!!subscribe)){
-		Object.keys(subscribe[topic]).forEach(function(name) {	
-			// Checking if  external device for this topic
-			if (!!devices[name]){
-				Object.keys(subscribe[topic][name]).forEach(function(attribute) {	
-					device = subscribe[topic][name][attribute]['device'];
-					property = subscribe[topic][name][attribute]['attribute'];
+	if ((!!topics) && (!!subscribe)){
+		topics.forEach(function(topic) {	
+			Object.keys(subscribe[topic]).forEach(function(name) {	
+				// Checking if  external device for this topic
+				if (!!devices[name]){
+					Object.keys(subscribe[topic][name]).forEach(function(attribute) {	
+						device = subscribe[topic][name][attribute]['device'];
+						property = subscribe[topic][name][attribute]['attribute'];
+						value = contents;
+						if ((!!subscribe[topic][name][attribute]['command']) && (!!subscribe[topic][name][attribute]['command'][contents])) 
+							value = subscribe[topic][name][attribute]['command'][contents];
+						cmd = true;	
+						postRequest(topic, contents, device, property, value, cmd, incoming);
+					});
+				} else { 	
+					// Remove the preface from the topic before splitting it
+					var pieces = topic.substr(config.mqtt.preface.length + 1).split('/');				
+					device = pieces[0];
+					property = pieces[1];
 					value = contents;
-					if ((!!subscribe[topic][name][attribute]['command']) && (!!subscribe[topic][name][attribute]['command'][contents])) 
-						value = subscribe[topic][name][attribute]['command'][contents];
-					cmd = true;	
-					postRequest(topic, contents, device, property, value, cmd);
-				});
-			} else { 	
-				// Remove the preface from the topic before splitting it
-				var pieces = topic.substr(config.mqtt.preface.length + 1).split('/');				
-				device = pieces[0];
-				property = pieces[1];
-				value = contents;
-				var topicReadState = getTopicFor(device, property, TOPIC_READ_STATE),
-					topicWriteState = getTopicFor(device, property, TOPIC_WRITE_STATE),
-					topicSwitchState = getTopicFor(device, 'switch', TOPIC_READ_STATE),
-					topicLevelCommand = getTopicFor(device, 'level', TOPIC_COMMAND),		
-					cmd = (!pieces[2] || pieces[2] && pieces[2] === config.mqtt[SUFFIX_COMMAND]);
-				// Deduplicate only if the incoming message topic is the same as the read state topic
-				if (topic === topicReadState) {
-					if (history[topic] === contents) {
-						winston.info('Skipping duplicate message from: %s = %s', topic, contents);
+					var topicReadState = getTopicFor(device, property, TOPIC_READ_STATE),
+						topicWriteState = getTopicFor(device, property, TOPIC_WRITE_STATE),
+						topicSwitchState = getTopicFor(device, 'switch', TOPIC_READ_STATE),
+						topicLevelCommand = getTopicFor(device, 'level', TOPIC_COMMAND),		
+						cmd = (!pieces[2] || pieces[2] && pieces[2] === config.mqtt[SUFFIX_COMMAND]);
+					// Deduplicate only if the incoming message topic is the same as the read state topic
+					if (topic === topicReadState) {
+						if (history[topic] === contents) {
+							winston.info('Skipping duplicate message from: %s = %s', topic, contents);
+							return;
+						}
+					}
+					// If sending level data and the switch is off, don't send anything
+					// SmartThings will turn the device on (which is confusing)
+					if (property === 'level' && history[topicSwitchState] === 'off') {
+						winston.info('Skipping level set due to device being off');
 						return;
 					}
-				}
-				// If sending level data and the switch is off, don't send anything
-				// SmartThings will turn the device on (which is confusing)
-				if (property === 'level' && history[topicSwitchState] === 'off') {
-					winston.info('Skipping level set due to device being off');
-					return;
-				}
 
-				// If sending switch data and there is already a nonzero level value, send level instead
-				// SmartThings will turn the device on
-				if (property === 'switch' && contents === 'on' &&
-					history[topicLevelCommand] > 0) {
-					winston.info('Passing level instead of switch on');
-					property = 'level';
-					contents = history[topicLevelCommand];
-				}				
-				postRequest(topic, contents, device, property, value, cmd);
-			}
+					// If sending switch data and there is already a nonzero level value, send level instead
+					// SmartThings will turn the device on
+					if (property === 'switch' && contents === 'on' &&
+						history[topicLevelCommand] > 0) {
+						winston.info('Passing level instead of switch on');
+						property = 'level';
+						contents = history[topicLevelCommand];
+					}				
+					postRequest(topic, contents, device, property, value, cmd, incoming);
+				}
+			});
 		});
 	}	
 }
 
 
-function postRequest(topic, contents, device, property, value, cmd){	
+function postRequest(topic, contents, device, property, value, cmd, incoming){	
 		
 	// If we subscribe to topic we are publishing we get into a loop
-	if ((!!publications) && (!!publications[topic]) && (!!publications[topic][device]) && (!!publications[topic][device][property])){
-		winston.error('%s for attribute %s for device %s is also being published to: [%s][%s][%s].\nIgnoring: %s = %s', topic, property, device, device, property, topic, topic, contents);
+	if ((!!publications) && (!!publications[incoming]) && (!!publications[incoming][device]) && (!!publications[incoming][device][property])){
+		winston.error('Incoming %s for attribute %s for device %s is also being published to: [%s][%s][%s].\nIgnoring: %s = %s', incoming, property, device, device, property, incoming, incoming, contents);
 		return;		
 	}
-	history[topic] = contents;
-	winston.info('MQTT --> ST - Topic: [%s][%s]\t[%s][%s][%s]', topic, (contents.length > 25) ?
-				contents.substr(0,25) + "..." : contents , device, property, value);
+	history[incoming] = contents;
+	var msg = (contents.length > 25) ?	contents.substr(0,25) + "..." : contents
+	if (!topic.match(/[*+]/)) {
+		winston.info('MQTT --> ST - Topic: [%s][%s]\t[%s][%s][%s]', topic, msg , device, property, value)
+	} else { 
+		winston.info('MQTT  --> MQTT[WildCard] - Topic: [%s][%s]\t[%s][%s]', incoming, msg, topic, msg);
+		winston.info('MQTT[WildCard] --> ST - Topic: [%s][%s]\t[%s][%s][%s]', topic, msg , device, property, value)
+	}
 	request.post({
 				url: 'http://' + callback,
 				json: {
@@ -563,20 +581,17 @@ async.series([
 		winston.info('Configuration Directory - %s', CONFIG_DIR);
         winston.info('Loading configuration');
 		configureDefaults();
-		if (config.deviceconfig) {
-			winston.info('Loading Device configuration');
-			devices = loadDeviceConfiguration();
-		}	
-
         winston.info('Loading previous state');
         state = loadSavedState();
         callback = state.callback;
         subscriptions = state.subscriptions;
 		publications = state.publications;
+		st_request = state.st_request;
         history = state.history;
-
-        //winston.info('Performing configuration migration');
-        //migrateState(state.version);
+		if (!!st_request) {
+			winston.info ('request object - %s', st_request);
+			processSubscriptions(st_request);
+		}
 		saveState();
         process.nextTick(next);
     },
@@ -620,25 +635,21 @@ async.series([
 
         // Push event from SmartThings
         app.post('/push',
-            expressJoi({
-                body: {
+            expressJoi.body(joi.object({
                     //   "name": "Energy Meter",
                     name: joi.string().required(),
                     //   "value": "873",
                     value: joi.string().required(),
                     //   "type": "power",
                     type: joi.string().required()
-                }
-            }), handlePushEvent);
+            })), handlePushEvent);
 
         // Subscribe event from SmartThings
         app.post('/subscribe',
-            expressJoi({
-                body: {
+            expressJoi.body(joi.object({
                     devices: joi.object().required(),
                     callback: joi.string().required()
-                }
-            }), handleSubscribeEvent);
+            })), handleSubscribeEvent);
 
         // Log all errors to disk
         app.use(expressWinston.errorLogger(createLogger({
