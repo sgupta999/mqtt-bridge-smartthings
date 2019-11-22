@@ -2,6 +2,8 @@
 ***Broker between Smartthings and MQTT Broker.***
 
 [![GitHub Tag](https://img.shields.io/github/tag/sgupta999/mqtt-bridge-smartthings.svg)](https://github.com/sgupta999/mqtt-bridge-smartthings/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sgupta99/mqtt-bridge-smartthings.svg)](https://hub.docker.com/r/sgupta99/mqtt-bridge-smartthings/)
+[![Docker Stars](https://img.shields.io/docker/stars/sgupta99/mqtt-bridge-smartthings.svg)](https://hub.docker.com/r/sgupta99/mqtt-bridge-smartthings/)
 
 This is an upate from the [smartthings-mqtt-broker](https://github.com/stjohnjohnson/smartthings-mqtt-bridge) orginally developed by St. John Johnson.  (https://github.com/stjohnjohnson/smartthings-mqtt-bridge). I have borrowed with abandon from his work, both in compiling this readme; and the server/client codeset, so a big thank you to him.
 
