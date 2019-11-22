@@ -69,7 +69,7 @@ The RPI distro is about 768MB and Alpine is about 136MB - so I would still go fo
 
 # Docker Compose
 
-If you want to bundle everything together, you can use [Docker Compose](https://docs.docker.com/compose/). This will install and run both mosquitto and MBS - you still need to make sure mosquitto.com and mbs config files are in the right directories.
+If you want to bundle everything together, you can use [Docker Compose](https://docs.docker.com/compose/). This will install and run both mosquitto and MBS - you still need to make sure mosquitto.conf and mbs config files are in the right directories.
 
 Just create a file called docker-compose.yml with these contents:
 ```
