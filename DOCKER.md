@@ -66,3 +66,34 @@ docker run -p:8080:8080 \
 		   sgupta99/mqtt-bridge-smartthings:1.0.3-rpi
 ```	   
 The RPI distro is about 768MB and Alpine is about 136MB - so I would still go for the alpine distro
+
+# Docker Compose
+
+If you want to bundle everything together, you can use [Docker Compose](https://docs.docker.com/compose/). This will install and run both mosquitto and MBS - you still need to make sure mosquitto.com and mbs config files are in the right directories.
+
+Just create a file called docker-compose.yml with these contents:
+```
+mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt
+    environment:
+        - TZ=America/Chicago
+    volumes:
+        - D:/data/docker/volumes/mosquitto/config:/mosquitto/config
+        - D:/data/docker/volumes/mosquitto/data:/mosquitto/data
+        - D:/data/docker/volumes/mosquitto/log:/mosquitto/log
+    ports:
+        - 1883:1883
+        - 9001:9001
+
+mqttbridge:
+    image: sgupta99/mqtt-bridge-smartthings:1.0.3-alpine
+    container_name: mbs
+    environment:
+        - TZ=America/Chicago
+    volumes:
+        - D:/data/docker/volumes/mbs:/mbs/config
+    ports:
+        - 8080:8080
+```
+

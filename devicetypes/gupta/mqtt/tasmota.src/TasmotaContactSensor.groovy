@@ -20,7 +20,7 @@
  
 metadata {
 
-    definition (name: "Tasmota Contact Sensor", namespace: "gupta", author: "Sandeep Gupta") {
+    definition (name: "Tasmota Contact Sensor", namespace: "gupta/mqtt", author: "Sandeep Gupta") {
         capability "Contact Sensor"	
 		capability "Actuator"
 		capability "Refresh"

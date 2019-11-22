@@ -1,5 +1,5 @@
 /**
- *  Tasmota Combo Switch (Primary) - Contact Sensor (Secondary) Device Handler
+ *  Tasmota Combo Contact Sensor (Primary) - Switch (Secondary) Device Handler
  *
  *  Authors
  *	 - sandeep gupta
@@ -20,11 +20,11 @@
  
 metadata {
 
-    definition (name: "Tasmota SwitchSensor", namespace: "gupta", author: "Sandeep Gupta") {
+    definition (name: "Tasmota SensorSwitch", namespace: "gupta/mqtt", author: "Sandeep Gupta") {
 		capability "Actuator"
+        capability "Contact Sensor"	
         capability "Switch"
 		capability "Momentary"
-        capability "Contact Sensor"	
 		capability "Refresh"
 		
 		command "open"
@@ -47,29 +47,31 @@ metadata {
 		status "toggle": "momentary:push"
     }
 
-    tiles {	
-		multiAttributeTile(name:"main", type: "device.switch", width: 6, height: 4, canChangeIcon: 'true', canChangeBackground : 'true' ){
-			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC"
-				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-			}		
-				
+    tiles {		
+		multiAttributeTile(name:"main", type: "generic", canChangeIcon: 'true', canChangeBackground : 'true' ){
+			tileAttribute ("device.contact", key: "PRIMARY_CONTROL") {
+				attributeState "open", label:'${name}', action: "close", icon:"st.contact.contact.open", backgroundColor:"#e86d13"
+				attributeState "closed", label:'${name}', action: "open", icon:"st.contact.contact.closed", backgroundColor:"#00a0dc"
+            }
+			
 			tileAttribute("device.device_details", key: "SECONDARY_CONTROL") {
-				attributeState("default", action: "refresh", label: '${currentValue}', icon: "https://github.com/sgupta999/GuptaSmartthingsRepository/raw/master/icons/refresh.png")				
+				attributeState("default", action: "refresh", label: '${currentValue}', icon:"https://github.com/sgupta999/GuptaSmartthingsRepository/raw/master/icons/refresh.png")				
                 attributeState("refresh", label: 'Updating data from server...')
 			}
+        }	
+		
+		
+		standardTile("switch", "device.switch",  width: 2, height: 2, decoration: "flat") {
+			state("on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC")
+			state("off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff")
 		}
 		
-		standardTile("contact", "device.contact", width: 2, height: 2, decoration: "flat") {
-			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
-			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
-		}		
 		
 		standardTile("toggle", "device.switch",  width: 2, height: 2, decoration: "flat") {
 			state("on", label: 'Toggle', action: "push", icon: "st.switches.switch.on", backgroundColor: "#00A0DC")
 			state("off", label: 'Toggle', action: "push", icon: "st.switches.switch.off", backgroundColor: "#ffffff")
 		}
-		
+
 		valueTile("wifi", "device.wifi", width: 1, height: 1, decoration: "flat") {
 			state ("default", label: '${currentValue}', backgroundColor: "#e86d13", icon: "https://github.com/sgupta999/GuptaSmartthingsRepository/raw/master/icons/blank1x1-orange.png")
 		}
@@ -92,7 +94,7 @@ metadata {
 		}
 
 		main "main"
-		details(["main", "contact","healthStatus", "toggle","wifi", "rssiLevel","details" ])
+		details(["main", "switch","healthStatus", "toggle","wifi", "rssiLevel","details" ])
     }
 
 	preferences {

@@ -467,7 +467,7 @@ import groovy.transform.Field
 
 definition(
     name: "MBS SmartApp Full",
-    namespace: "gupta",
+    namespace: "gupta/mqtt",
     author: "Sandeep Gupta",
     description: "An MQTT bridge to SmartThings [MBS-SmartApp-Full]",
     category: "My Apps",

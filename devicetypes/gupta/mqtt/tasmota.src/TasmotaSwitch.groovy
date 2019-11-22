@@ -1,5 +1,5 @@
 /**
- *  Tasmota Combo Contact Sensor (Primary) - Switch (Secondary) Device Handler
+ *  Tasmota Switch Device Handler
  *
  *  Authors
  *	 - sandeep gupta
@@ -20,15 +20,11 @@
  
 metadata {
 
-    definition (name: "Tasmota SensorSwitch", namespace: "gupta", author: "Sandeep Gupta") {
+    definition (name: "Tasmota Switch", namespace: "gupta/mqtt", author: "Sandeep Gupta") {
 		capability "Actuator"
-        capability "Contact Sensor"	
         capability "Switch"
-		capability "Momentary"
 		capability "Refresh"
 		
-		command "open"
-		command "close"
 		command "processMQTT"
 		
 		attribute "update", "string"		
@@ -39,37 +35,34 @@ metadata {
 		attribute "healthStatus", "string"
 	}
 
-	simulator {
-		status "open": "contact:open"
-		status "closed": "contact:close"   
+	simulator { 
 		status "on": "switch:on"
 		status "off": "switch:off"
-		status "toggle": "momentary:push"
     }
 
-    tiles {		
-		multiAttributeTile(name:"main", type: "generic", canChangeIcon: 'true', canChangeBackground : 'true' ){
-			tileAttribute ("device.contact", key: "PRIMARY_CONTROL") {
-				attributeState "open", label:'${name}', action: "close", icon:"st.contact.contact.open", backgroundColor:"#e86d13"
-				attributeState "closed", label:'${name}', action: "open", icon:"st.contact.contact.closed", backgroundColor:"#00a0dc"
-            }
-			
+    tiles {	
+		multiAttributeTile(name:"main", type: "device.switch", width: 6, height: 4, canChangeIcon: 'true', canChangeBackground : 'true' ){
+			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
+				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC"
+				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+			}		
+				
 			tileAttribute("device.device_details", key: "SECONDARY_CONTROL") {
 				attributeState("default", action: "refresh", label: '${currentValue}', icon:"https://github.com/sgupta999/GuptaSmartthingsRepository/raw/master/icons/refresh.png")				
                 attributeState("refresh", label: 'Updating data from server...')
 			}
-        }	
+		}
 		
-		
-		standardTile("switch", "device.switch",  width: 2, height: 2, decoration: "flat") {
-			state("on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC")
-			state("off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff")
+		standardTile("switchon", "device.switch",  width: 2, height: 2, decoration: "flat") {
+			state("on", label: 'ON', action: "switch.on", icon: "st.Home.home30")
+			state("off", label: 'ON', action: "switch.on", icon: "st.Home.home30")
 		}
 		
 		
-		standardTile("toggle", "device.switch",  width: 2, height: 2, decoration: "flat") {
-			state("on", label: 'Toggle', action: "push", icon: "st.switches.switch.on", backgroundColor: "#00A0DC")
-			state("off", label: 'Toggle', action: "push", icon: "st.switches.switch.off", backgroundColor: "#ffffff")
+		
+		standardTile("switchoff", "device.switch",  width: 2, height: 2, decoration: "flat") {
+			state("off", label: 'OFF', action: "switch.off", icon: "st.Home.home30")
+			state("on", label: 'OFF', action: "switch.off", icon: "st.Home.home30")
 		}
 
 		valueTile("wifi", "device.wifi", width: 1, height: 1, decoration: "flat") {
@@ -94,14 +87,8 @@ metadata {
 		}
 
 		main "main"
-		details(["main", "switch","healthStatus", "toggle","wifi", "rssiLevel","details" ])
+		details(["main", "switchon","healthStatus", "switchoff","wifi", "rssiLevel","details" ])
     }
-
-	preferences {
-		section("Main") {
-			input(name: "linked", type: "bool", title: "Link Switch and Contact Sensor", description: "", required: false)
-		}
-	}
 }
 
 
@@ -111,12 +98,6 @@ def parse(String description) {
 	switch(pair[0].trim()){
 		case 'switch':	
 				(pair[1].trim() == "on") ? on() : off();
-				break;
-		case 'contact':
-				(pair[1].trim() == "open") ? open() : close();
-				break;
-		case 'momentary':
-				if (pair[1].trim() == "push") push();
 				break;
 		default:
 				break;
@@ -238,42 +219,13 @@ def off(){
 	_off();
 }
 
-def open(){
-	if (device.currentValue("contact") == "open") return;
-	_open();
-}
-
-def close(){
-	if (device.currentValue("contact") == "closed") return;
-	_close();
-}
-
-def push() {
-	(device.currentValue("switch") == "on") ? off() : on()
-	log.debug "Sent 'TOGGLE' command for device: ${device}"
-}
-
 def _on() {
     sendEvent(name: "switch", value: "on")
-	if (linked) sendEvent(name: "contact", value: "open")
 	log.debug "Sent 'on' command for device: ${device}"
 }
 
 def _off() {
     sendEvent(name: "switch", value: "off")
-	if (linked) sendEvent(name: "contact", value: "closed")
 	log.debug "Sent 'off' command for device: ${device}"
-}
-
-def _open() {
-    sendEvent(name: "contact", value: "open")
-	if (linked) sendEvent(name: "switch", value: "on")
-	log.debug "Sent 'open' command for device: ${device}"
-}
-
-def _close() {
-    sendEvent(name: "contact", value: "closed")
-	if (linked) sendEvent(name: "switch", value: "off")
-	log.debug "Sent 'close' command for device: ${device}"
 }
 
