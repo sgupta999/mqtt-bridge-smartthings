@@ -1,5 +1,5 @@
 # Docker Setup
-# On Windows - using Docker Desktop
+## On Windows - using Docker Desktop
 
 Windows Defender Firewall with Advanced Security, the following rule needs to be created:
 
@@ -23,7 +23,7 @@ docker pull mbs-alpine sgupta99/mqtt-bridge-smartthings:1.0.3-rpi
 docker run -p:8080:8080 -v d:/data/docker/volumes/mbs:/mbs/config -e TZ=America/Chicago --name mbs-rpi sgupta99/mqtt-bridge-smartthings:1.0.3-rpi
 ```
 The RPI distro is about 768MB and Alpine is about 136MB - so if running on windows I would go for the alpine distro
-# Some helpful commands for widows users not familiar with docker
+## Some helpful commands for widows users not familiar with docker
 ```
 docker image ls
 docker image rm -f <image-id>
@@ -38,7 +38,7 @@ docker start -i mbs-alpine
 Container names in the above examples are mbs-alpine and mbs-rpi for example
 
 
-# On linux platforms - (I have not tested then but should work)
+## On linux platforms - (I have not tested then but should work)
 
 make sure linux firewall rules are set appropriately
 

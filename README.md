@@ -139,6 +139,8 @@ Living Room Light:
 
 # Installation
 
+## Docker Setup
+
 since version 1.0.3 I have uploaded docker images for alpine linux distro and raspberry pi distro to docker hub. Please see detailed instructions for Docker installation in [DOCKER.md](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/DOCKER.md)
 
 ## NPM
