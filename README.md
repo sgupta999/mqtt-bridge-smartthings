@@ -164,7 +164,7 @@ If you are interested in running it on windows as a server the windows service d
 1. Customize the MQTT host and devices
     ```
     $ vi config.yml
-     $ vi devices.yml
+    $ vi devices.yml
     # Restart the service to get the latest changes
     ```
 
