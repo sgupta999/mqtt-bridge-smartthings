@@ -1,0 +1,18 @@
+container_name: mbs
+environment:
+    TZ:America/Chicago
+mqtt:
+    image: eclipse-mosquitto
+    volumes:
+        - D:/data/docker/volumes/mosquitto:/mosquitto
+    ports:
+        - 1883:1883
+
+mqttbridge:
+    image: sgupta99/mqtt-bridge-smartthings:1.0.3-alpine
+    volumes:
+        - D:/data/docker/volumes/mbs:/config
+    ports:
+        - 8080:8080
+    links:
+        - mqtt

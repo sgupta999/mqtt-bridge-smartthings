@@ -27,6 +27,7 @@
 const { createLogger, format } = require('winston');
 const logform = require('logform');
 const { combine, timestamp, label, printf } = logform.format;
+
 var winston = require('winston'),
 	daily = require('winston-daily-rotate-file'),
     express = require('express'),
@@ -43,20 +44,10 @@ var winston = require('winston'),
 	mqttWildcard = require('mqtt-wildcard'),
     request = require('request'),
 	path = require('path'),
+	
 	CONFIG_DIR =  process.env.CONFIG_DIR || path.join(__dirname,'config'),
     SAMPLE_FILE = path.join(CONFIG_DIR, '_config.yml'),
-    CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml')	;
-	
-	function loadConfiguration () {
-    if (!fs.existsSync(CONFIG_FILE)) {
-        console.log('No previous configuration found, creating one');
-        fs.writeFileSync(CONFIG_FILE, fs.readFileSync(SAMPLE_FILE));
-    }
-
-    return yaml.safeLoad(fs.readFileSync(CONFIG_FILE));
-}
-
-var config = loadConfiguration(),
+    CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml'),	
 	DEVICE_CONFIG_FILE = path.join(CONFIG_DIR, 'devices.yml'),
     STATE_FILE = path.join(CONFIG_DIR, 'data', 'state.json'),
     STATE_SUMMARY_FILE = path.join(CONFIG_DIR, 'data', 'state.summary.json'),
@@ -71,9 +62,10 @@ var config = loadConfiguration(),
     TOPIC_WRITE_STATE = 'set_state',
     SUFFIX_WRITE_STATE = 'state_write_suffix',
     RETAIN = 'retain',
-	LOGGING_LEVEL = config.loglevel;
+	config = loadConfiguration(),	
+	LOGGING_LEVEL = config.loglevel,
 
-var app = express(),
+	app = express(),
     client,
     subscriptions = [],
 	publications = {},
@@ -81,10 +73,10 @@ var app = express(),
     callback = '',
 	devices = {},
 	st_request = {},
-    history = {};
+    history = {},
   
-// winston transports
-var consoleLog = new  winston.transports.Console(),
+	// winston transports
+	consoleLog = new  winston.transports.Console(),
 	eventsLog = new (winston.transports.DailyRotateFile)({
 					filename: path.join(CONFIG_DIR, 'log', 'events-%DATE%.log'),
 					datePattern: 'YYYY-MM-DD',
@@ -109,10 +101,6 @@ var consoleLog = new  winston.transports.Console(),
 	logFormat = combine(format.splat(), 
 						timestamp({format:(new Date()).toLocaleString('en-US'),  format: 'YYYY-MM-DD HH:mm:ss A'}),
 						printf(nfo => {return `${nfo.timestamp} ${nfo.level}: ${nfo.message}`;})
-				),
-	appFormat = combine(format.splat(), format.json(),
-						timestamp({format:(new Date()).toLocaleString('en-US'),  format: 'YYYY-MM-DD HH:mm:ss A'}),	 
-						printf(nfo => {return `${nfo.timestamp} ${nfo.level}: ${JSON.stringify(nfo.meta)})`;})
 				);
 				
 	
@@ -122,6 +110,15 @@ winston = createLogger({
 	format:  logFormat,
 	transports : [eventsLog, consoleLog]
 });   
+
+
+function loadConfiguration () {
+	if (!fs.existsSync(CONFIG_FILE)) {
+		console.log('No previous configuration found, creating one');
+		fs.writeFileSync(CONFIG_FILE, fs.readFileSync(SAMPLE_FILE));
+	}
+	return yaml.safeLoad(fs.readFileSync(CONFIG_FILE));
+}
 
 /**
  * Load device configuration if it exists
@@ -136,14 +133,14 @@ function loadDeviceConfiguration () {
         output = yaml.safeLoad(fs.readFileSync(DEVICE_CONFIG_FILE));
     } catch (ex) {
 		winston.error(ex);
-        winston.info('No external device configurations found, continuing');
+        winston.info('ERROR loading external device configurations, continuing');
 		return;
     }
 	Object.keys(output).forEach(function (device) {		
 		winston.debug("Loading config for Device " , device);
 		Object.keys(output[device]["subscribe"]).forEach (function (attribute){			
 			Object.keys(output[device]["subscribe"][attribute]).forEach (function (sub){
-				var data = {};			
+				let data = {};			
 				data['device']= device;
 				data['attribute'] = attribute;
 				if ((!!output[device]["subscribe"][attribute][sub]) && (!!output[device]["subscribe"][attribute][sub]['command']))
@@ -316,13 +313,13 @@ function handlePushEvent (req, res) {
 function mqttPublish(device, attribute, topic, value, retain, res){	
     history[topic] = value;
 	if ((!!publications) && (!publications[topic])){
-		var data = {};
+		let data = {};
 		data['device'] =  device;
 		data['attribute'] =  attribute;
 		data['command'] = value;
 		publications[topic] = {};
 		publications[topic][device] = data;
-	}
+	} else if (!!publications[topic][device]) publications[topic][device]['command'] = value;
 	var sub = isSubscribed(topic);
 	if ((!!subscribe) && (!!subscribe[sub]) && (!!subscribe[sub][device]) && (!!subscribe[sub][device][attribute])) {
 		winston.warn('POSSIBLE LOOP. Device[Attribute] %s[%s] is publishing to Topic %s while subscribed to Topic %s', device, attribute, topic, sub);
@@ -348,14 +345,14 @@ function mqttPublish(device, attribute, topic, value, retain, res){
  */
 function handleSubscribeEvent (req, res) {
     // Subscribe to all events
-	var oldsubscriptions = subscriptions;
+	let oldsubscriptions = subscriptions;
 	st_request = req.body.devices;
 	processSubscriptions(st_request);
     // Store callback
     callback = req.body.callback;
 	// Store current state on disk    
 	saveState();
-	var unsubs 	= comparearrays(subscriptions, oldsubscriptions),
+	let unsubs 	= comparearrays(subscriptions, oldsubscriptions),
 		subs 	= comparearrays(oldsubscriptions, subscriptions);
 	if ((!!unsubs) && (unsubs.length > 0)) client.unsubscribe(unsubs);
 	if ((!!subs) && (subs.length > 0)) {
@@ -379,7 +376,7 @@ function processSubscriptions(req){
         req[property].forEach(function (device) {
 			winston.debug(' %s - %s ', property, device);			
 			// CRITICAL - if device in DEVICE_CONFIG_FILE, file sub/pub info will supercedes
-			if ((!!devices[device])) {
+			if (!!devices && (!!devices[device])) {
 				if ((!!devices[device]["subscribe"]) && (!!devices[device]["subscribe"][property])){	
 					Object.keys(devices[device]["subscribe"][property]).forEach (function (sub){	
 						if (!subscriptions.includes(sub)) subscriptions.push(sub);	
@@ -387,10 +384,10 @@ function processSubscriptions(req){
 					});
 				}
 			}else {
-				var data = {};			
+				let data = {};			
 				data['device']=device;
 				data['attribute'] = property;
-				var sub = getTopicFor(device, property, TOPIC_COMMAND);
+				let sub = getTopicFor(device, property, TOPIC_COMMAND);
 				if (!subscriptions.includes(sub)) subscriptions.push(sub);
 				if (!subscribe[sub]) subscribe[sub] = {};
 				if (!subscribe[sub][device]) subscribe[sub][device] = {};
@@ -413,7 +410,7 @@ function processSubscriptions(req){
 function comparearrays(arr1, arr2){
 	if (!arr2) return null;
 	if (!arr1) return arr2;
-	var newarray = [];
+	let newarray = [];
 	arr2.forEach (function (sub){
 		if (!arr1.includes(sub)) newarray.push(sub);
 	});
@@ -456,9 +453,8 @@ function getTopicFor (device, property, type) {
  */
 function isSubscribed(topic){
 	if (!subscriptions) return null;
-	var topics = []
-	var i;
-	for (i=0; i< subscriptions.length; i++){
+	var topics = [];
+	for (let i=0; i< subscriptions.length; i++){
 		if (subscriptions[i] == topic) {
 			topics.push(subscriptions[i]);
 		}else if (mqttWildcard(topic, subscriptions[i]) != null) topics.push(subscriptions[i]);		
@@ -576,7 +572,6 @@ function postRequest(topic, contents, device, property, value, cmd, incoming){
 async.series([
     function loadFromDisk (next) {
         var state;
-
         winston.info('Starting SmartThings MQTT Bridge - v%s', CURRENT_VERSION); 
 		winston.info('Configuration Directory - %s', CONFIG_DIR);
         winston.info('Loading configuration');
@@ -589,8 +584,14 @@ async.series([
 		st_request = state.st_request;
         history = state.history;
 		if (!!st_request) {
-			winston.info ('request object - %s', st_request);
-			processSubscriptions(st_request);
+			try {
+				winston.info ('Last Request from ST - %s', JSON.stringify(st_request));
+				processSubscriptions(st_request);
+			} catch (ex) {
+				winston.error(ex);
+				winston.info('Could not restore subscriptions. Please rebuscribe in IDE, continuing');
+				return;
+			}
 		}
 		saveState();
         process.nextTick(next);
@@ -628,11 +629,12 @@ async.series([
         app.use(bodyparser.json());
 
         // Log all requests to disk
-        app.use(expressWinston.logger(createLogger({
-										format: appFormat,
+        app.use(expressWinston.logger({
+										format: logFormat,
+										msg: "HTTP /{{req.method}} {{req.url}} host={{req.hostname}} --> Status Code={{res.statusCode}} ResponseTime={{res.responseTime}}ms",
 										transports : [accessLog]
-		})));
-
+			}));
+			
         // Push event from SmartThings
         app.post('/push',
             expressJoi.body(joi.object({
@@ -652,10 +654,11 @@ async.series([
             })), handleSubscribeEvent);
 
         // Log all errors to disk
-        app.use(expressWinston.errorLogger(createLogger({
-										format: appFormat,
-										transports : [errorLog]
-		})));
+        app.use(expressWinston.errorLogger({
+										format: logFormat,
+										msg: " [{{res.statusCode}} {{req.method}}] {{err.message}}\n{{err.stack}}",
+										transports : [errorLog,consoleLog]
+			}));
 
         // Proper error messages with Joi
         app.use(function (err, req, res, next) {
