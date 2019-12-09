@@ -82,6 +82,15 @@ import groovy.transform.Field
         ],
         action: "actionOnOff"
     ],
+    "presenceSensors": [
+        name: "Presence Sensor",
+        capability: "capability.presenceSensor",
+        attributes: [
+            "presence"
+        ],
+        action: "actionPresence",
+		duplicate: "allow"
+    ],
 	// My custom MQTT device - non-tasmota, should not apply to any use case but given as an example here
     "customPowerMeters": [
         name: "Custom Power Meter",
@@ -189,6 +198,7 @@ def updateSubscription() {
 // Receive an event from the bridge
 def bridgeHandler(evt) {
     def json = new JsonSlurper().parseText(evt.value)
+	def data = parseJson(evt.data)
     log.debug "Received device event from bridge: ${json}"
 
     if (json.type == "notify") {
@@ -217,17 +227,19 @@ def bridgeHandler(evt) {
                     else {
                         if (capability.containsKey("action")) { 					
 							if (!eventCheck(device.displayName,json.type, json.value)) {
-								log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
-								return;
+								if (!capability.containsKey("duplicate")){
+									log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
+									return;
+								}
 							} 
                             def action = capability["action"]		
 							if (action instanceof String){
 								log.debug "Calling action method ${action}, for attribute ${json.type}, for device ${device} with payload ${json.value}"
-								"$action"(device, json.type, json.value);								
+								(data == null) ? "$action"(device, json.type, json.value) : "$action"(device, json.type, json.value, data);			
 							} else if (action.containsKey(json.type)){
 								action = action[json.type];
 								log.debug "Calling action method ${action}, for attribute ${json.type}, for device ${device} with payload ${json.value}"
-								"$action"(device, json.type, json.value);
+								(data == null) ? "$action"(device, json.type, json.value) : "$action"(device, json.type, json.value, data);
 							}
 							return;
                         }
@@ -239,8 +251,10 @@ def bridgeHandler(evt) {
 			settings[key].each {device ->
 				if ((device.displayName == json.name) && (json.type != null) && (json.value != null)) {						
 					if (!eventCheck(device.displayName,json.type, json.value)) {
-						log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
-						return;	
+						if (!capability.containsKey("duplicate")){
+							log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
+							return;
+						}
 					} 
 					def command = json.type;
 					if (device.getSupportedCommands().any {it.name == command}) {
@@ -321,5 +335,20 @@ def actionOnOff(device, attribute, value) {
         device.off()
     } else if (value == "on") {
         device.on()
+    }else if (value == "toggle") {
+		if (device.currentValue(attribute) == 'on'){
+			device.off();
+		} else if (device.currentValue(attribute) == 'off'){
+			device.on();
+		}
+	}
+}
+
+def actionPresence(device, attribute, value) {
+    if (value == "present") {
+    	device.arrived();
+    }
+    else if (value == "not present") {
+    	device.departed();
     }
 }

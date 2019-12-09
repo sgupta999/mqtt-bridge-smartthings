@@ -102,14 +102,16 @@ import groovy.transform.Field
         capability: "capability.beacon",
         attributes: [
             "presence"
-        ]
+        ],
+        action: "actionPresence"
     ],
     "button": [
         name: "Button",
         capability: "capability.button",
         attributes: [
             "button"
-        ]
+        ],
+        action: "actionHeldPushed"
     ],
     "carbonDioxideMeasurement": [
         name: "Carbon Dioxide Measurement",
@@ -157,6 +159,7 @@ import groovy.transform.Field
         attributes: [
             "contact"
         ]
+        action: "actionOpenClosed"
     ],
     "doorControl": [
         name: "Door Control",
@@ -560,6 +563,7 @@ def updateSubscription() {
 // Receive an event from the bridge
 def bridgeHandler(evt) {
     def json = new JsonSlurper().parseText(evt.value)
+	def data = parseJson(evt.data)
     log.debug "Received device event from bridge: ${json}"
 
     if (json.type == "notify") {
@@ -588,17 +592,19 @@ def bridgeHandler(evt) {
                     else {
                         if (capability.containsKey("action")) { 					
 							if (!eventCheck(device.displayName,json.type, json.value)) {
-								log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
-								return;
+								if (!capability.containsKey("duplicate")){
+									log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
+									return;
+								}
 							} 
                             def action = capability["action"]		
 							if (action instanceof String){
 								log.debug "Calling action method ${action}, for attribute ${json.type}, for device ${device} with payload ${json.value}"
-								"$action"(device, json.type, json.value);								
+								(data == null) ? "$action"(device, json.type, json.value) : "$action"(device, json.type, json.value, data);			
 							} else if (action.containsKey(json.type)){
 								action = action[json.type];
 								log.debug "Calling action method ${action}, for attribute ${json.type}, for device ${device} with payload ${json.value}"
-								"$action"(device, json.type, json.value);
+								(data == null) ? "$action"(device, json.type, json.value) : "$action"(device, json.type, json.value, data);
 							}
 							return;
                         }
@@ -610,8 +616,10 @@ def bridgeHandler(evt) {
 			settings[key].each {device ->
 				if ((device.displayName == json.name) && (json.type != null) && (json.value != null)) {						
 					if (!eventCheck(device.displayName,json.type, json.value)) {
-						log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
-						return;	
+						if (!capability.containsKey("duplicate")){
+							log.debug "Duplicate of last event, ignoring 'mbs-server' event '${json.value}' on attribute '${json.type}' for device '${device.displayName}'"	
+							return;
+						}
 					} 
 					def command = json.type;
 					if (device.getSupportedCommands().any {it.name == command}) {
@@ -639,7 +647,7 @@ def inputHandler(evt) {
         state.ignoreEvent = false;
     }else if (!eventCheck(evt.displayName,evt.name, evt.value)) {
 		// Here we will ignore event from device if the last payload for the same event is the same as this one.
-        log.debug "Duplicate of last event from device '${evt.displayName}', ignoring event '${evt.value}' on attribute '${evt.name}' for device '${evt.displayName}'"		
+        log.debug "Duplicate of last event from device '${evt.displayName}'; ignoring event '${evt.value}' on attribute '${evt.name}' for device '${evt.displayName}'"		
 		return;
 	} else {
         def json = new JsonOutput().toJson([
@@ -712,6 +720,18 @@ def actionColor(device, attribute, value) {
     }
 }
 
+
+
+def actionHeldPushed(device, attribute, value, data) {
+	if (value == 'held'){
+		def command = 'hold' + ${data.buttonNumber} 		
+		device.$"command"()
+	}else if (value == 'pushed'){
+		def command = 'push' + ${data.buttonNumber} 		
+		device.$"command"()
+	}
+}
+
 def actionOpenClosed(device, attribute, value) {
     if (value == "open") {
         device.open()
@@ -725,7 +745,13 @@ def actionOnOff(device, attribute, value) {
         device.off()
     } else if (value == "on") {
         device.on()
-    }
+    }else if (value == "toggle") {
+		if (device.currentValue(attribute) == 'on'){
+			device.off();
+		} else if (device.currentValue(attribute) == 'off'){
+			device.on();
+		}
+	}
 }
 
 def actionActiveInactive(device, attribute, value) {
