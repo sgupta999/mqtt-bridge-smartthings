@@ -100,6 +100,18 @@ import groovy.transform.Field
 			"mqttmsg"
         ],
         action: "actionProcessMQTT"
+    ],
+	// My custom MQTT device - non-tasmota, should not apply to any use case but given as an example here
+    "garageDoorOpener": [
+        name: "Garage Door Opener",
+        capability: "capability.garageDoorControl",
+        attributes: [
+            "switch",
+			"contact1",
+			"contact2",
+			"update",
+        ],
+        action: "actionProcessMQTT"
     ]
 ]
 
@@ -301,7 +313,7 @@ def inputHandler(evt) {
 
 def eventCheck(device, attribute, value){
 	// If last event was same return false, else store event and return true
-	if ((state?.events[device][attribute] == null) ||  (state?.events[device][attribute]  != value)){
+	if ((state?.events[device][attribute] == null) ||  (state?.events[device][attribute].toLowerCase()  != value.toLowerCase())){
 		state.events[device][attribute] = value;
 		return true;
 	}else return false;
