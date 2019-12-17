@@ -28,6 +28,7 @@ import groovy.json.JsonOutput
 metadata {
     definition (name: "MBS Bridge", namespace: "gupta/mqtt", author: "Sandeep Gupta") {
         capability "Notification"
+		attribute "healthStatus", "string"
     }
 
     preferences {
@@ -60,6 +61,40 @@ metadata {
         main "basic"
     }
 }
+
+def installed() {    
+    initialize()
+}
+
+def updated() {
+	log.trace "Executing 'updated'"
+	initialize()
+}
+
+def initialize() {
+    log.trace "Executing 'configure'"
+    sendEvent(name: "DeviceWatch-Enroll", value: [protocol: "cloud", scheme:"untracked"].encodeAsJson(), displayed: false)
+    markDeviceOnline()
+	setNetworkAddress()
+}
+
+def markDeviceOnline() {
+    setDeviceHealth("online")
+}
+
+def markDeviceOffline() {
+    setDeviceHealth("offline")
+}
+
+private setDeviceHealth(String healthState) {
+    log.debug("healthStatus: ${device.currentValue('healthStatus')}; DeviceWatch-DeviceStatus: ${device.currentValue('DeviceWatch-DeviceStatus')}")
+    // ensure healthState is valid
+    healthState = ["online", "offline"].contains(healthState) ? healthState : device.currentValue("healthStatus")
+    // set the healthState
+    sendEvent(name: "DeviceWatch-DeviceStatus", value: healthState)
+    sendEvent(name: "healthStatus", value: healthState)
+}
+
 
 // Store the MAC address as the device ID so that it can talk to SmartThings
 def setNetworkAddress() {

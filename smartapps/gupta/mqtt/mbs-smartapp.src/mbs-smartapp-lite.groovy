@@ -112,7 +112,22 @@ import groovy.transform.Field
 			"update",
         ],
         action: "actionProcessMQTT"
-    ]
+    ],
+    "thermostat": [
+        name: "Thermostat",
+        capability: "capability.thermostat",
+        attributes: [
+            "temperature",
+            "humidity",
+            "heatingSetpoint",
+            "coolingSetpoint",
+            "thermostatSetpoint",
+            "thermostatMode",
+            "thermostatFanMode",
+            "thermostatOperatingState"
+        ],
+        action: "actionThermostat"
+    ],
 ]
 
 definition(
@@ -203,7 +218,6 @@ def updateSubscription() {
     ])
 
     log.debug "Updating subscription: ${json}"
-
     bridge.deviceNotification(json)
 }
 
@@ -363,4 +377,39 @@ def actionPresence(device, attribute, value) {
     else if (value == "not present") {
     	device.departed();
     }
+}
+
+def actionThermostat(device, attribute, value) {	
+    try {
+		switch (attribute) {
+			case 'temperature':
+				device.setTemperature(value);
+				break;
+			case 'humidity':
+				device.setHumidity(value);
+				break;
+			case 'thermostatMode':
+				device.setThermostatMode(value);
+				break;
+			case 'thermostatOperatingState':
+				device.setOperatingState(value);
+				break;
+			case 'heatingSetpoint':
+				device.setHeatingSetpoint(value);
+				break;
+			case 'coolingSetpoint':
+				device.setCoolingSetpoint(value);
+				break;
+			case 'thermostatSetpoint':
+				device.setThermostatSetpoint(value);
+				break;
+			case 'thermostatFanMode':
+				device.setThermostatFanMode(value);
+				break;
+			default:
+				break;
+		}
+    } catch (all) {
+        log.warn "Action command  '$attribute' not defined in Device Handler for device '$device'. Value '$value' not set for attribute '$attribute'"
+    }		
 }

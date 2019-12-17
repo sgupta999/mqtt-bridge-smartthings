@@ -122,7 +122,6 @@ def configure() {
     log.trace "Executing 'configure'"
     sendEvent(name: "DeviceWatch-Enroll", value: [protocol: "cloud", scheme:"untracked"].encodeAsJson(), displayed: false)
     markDeviceOnline()
-    initialize()
 }
 
 def markDeviceOnline() {
