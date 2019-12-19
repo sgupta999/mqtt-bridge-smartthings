@@ -152,7 +152,7 @@ $ npm install -g mqtt-bridge-smartthings
 
 If you want to run it, you can simply call the binary:
 ```
-$ smartthings-mqtt-bridge
+$ mqtt-bridge-smartthings
 Starting SmartThings MQTT Bridge - v1.0.1
 Loading configuration
 No previous configuration found, creating one
