@@ -309,7 +309,7 @@ function handlePushEvent (req, res) {
 	mqttPublish(device, attribute, topic, value, retain, res);
 }
 
-function mqttPublish(device, attribute, topic, value, retain, res){	
+function mqttPublish(device, attribute, topic, value, retainflag, res){	
     history[topic] = value;
 	if ((!!publications) && (!publications[topic])){
 		let data = {};
@@ -325,7 +325,7 @@ function mqttPublish(device, attribute, topic, value, retain, res){
 	} else if ((!!subscribe[sub]) && (!!subscribe[sub][device])) {
 		winston.warn('POSSIBLE LOOP. Device %s is publishing to Topic %s while subscribed to Topic %s', device, topic, sub);
 	}
-    client.publish(topic, value, {retain: retain}, function () {
+    client.publish(topic, value, {retain: retainflag}, function () {
         res.send({
             status: 'OK'
         });
