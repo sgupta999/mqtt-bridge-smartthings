@@ -298,19 +298,18 @@ function handlePushEvent (req, res) {
 			value = ((!!devices[device]["publish"][attribute][pub].command) && (!!devices[device]["publish"][attribute][pub].command[value]))
 					? devices[device].publish[attribute][pub].command[value] : value;
 			topic = pub;	
-			winston.info('ST** --> MQTT: [%s][%s][%s]\t[%s][%s]', req.body.name, req.body.type, req.body.value, topic, value);
-			mqttPublish(device, attribute, topic, value, retain, res);
+			winston.info('ST** --> MQTT: [%s][%s][%s]\t[%s][%s][Retain:%s]', req.body.name, req.body.type, req.body.value, topic, value, retain);
 		});
 	}else {
 	// for devices with standard read, write, command suffixes
 		topic = getTopicFor(device, attribute, TOPIC_READ_STATE);
 		winston.debug('Device from SmartThings: %s = %s', topic, value);	
-		winston.info('ST --> MQTT: [%s][%s][%s]\t[%s][%s]', device, attribute, req.body.value, topic, value);
-		mqttPublish(device, attribute, topic, value, retain, res);
+		winston.info('ST --> MQTT: [%s][%s][%s]\t[%s][%s][Retain:%s]', device, attribute, req.body.value, topic, value, retain);
 	}
+	mqttPublish(device, attribute, topic, value, retain, res);
 }
 
-function mqttPublish(device, attribute, topic, value, retain, res){	
+function mqttPublish(device, attribute, topic, value, retainflag, res){	
     history[topic] = value;
 	if ((!!publications) && (!publications[topic])){
 		let data = {};
@@ -326,7 +325,7 @@ function mqttPublish(device, attribute, topic, value, retain, res){
 	} else if ((!!subscribe[sub]) && (!!subscribe[sub][device])) {
 		winston.warn('POSSIBLE LOOP. Device %s is publishing to Topic %s while subscribed to Topic %s', device, topic, sub);
 	}
-    client.publish(topic, value, retain, function () {
+    client.publish(topic, value, {retain: retainflag}, function () {
         res.send({
             status: 'OK'
         });
