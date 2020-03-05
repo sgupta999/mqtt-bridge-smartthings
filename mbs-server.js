@@ -293,10 +293,11 @@ function handlePushEvent (req, res) {
 	winston.debug('From ST: %s - %s - %s', topic, req.body.type, value);
 	// for devices from config file
 	if ((!!devices[device]) && (!!devices[device]["publish"]) && (!!devices[device]["publish"][attribute])){
-		retain  = (!!devices[device].retain) ? devices[device].retain : retain;	
+		retain  = (!!devices[device].retain) ? devices[device].retain : retain;			
+			winston.debug('ST** --> MQTT: [%s][%s][%s]\t[%s][%s][Retain:%s]', req.body.name, req.body.type, req.body.value, pub, value, retain);
 		Object.keys(devices[device]["publish"][attribute]).forEach (function (pub){
 			value = ((!!devices[device]["publish"][attribute][pub].command) && (!!devices[device]["publish"][attribute][pub].command[value]))
-					? devices[device].publish[attribute][pub].command[value] : value;
+					? devices[device]["publish"][attribute][pub].command[value] : value;
 			topic = pub;	
 			winston.info('ST** --> MQTT: [%s][%s][%s]\t[%s][%s][Retain:%s]', req.body.name, req.body.type, req.body.value, topic, value, retain);
 		});

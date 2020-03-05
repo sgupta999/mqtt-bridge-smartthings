@@ -1,6 +1,6 @@
 {
   "name": "mqtt-bridge-smartthings",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "MQTT Bridge to SmartThings [MBS]",
   "main": "mbs-server.js",
   "bin": {
