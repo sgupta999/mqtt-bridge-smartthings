@@ -168,7 +168,7 @@ If you are interested in running it on windows as a server the windows service d
     # Restart the service to get the latest changes
     ```
 
-2. Install the [MBS-Bridge Device Handler](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/devicetypes/gupta/mbs-bridge.src/mbs-bridge.groovy) in the [Device Handler IDE][ide-dt] using "Create via code"
+2. Install the [MBS-Bridge Device Handler](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/devicetypes/gupta/mqtt/mbs-bridge.src/mbs-bridge.groovy) in the [Device Handler IDE][ide-dt] using "Create via code"
 3. Add the "MQTT Bridge" device in the [My Devices IDE][ide-mydev]. Enter MQTT Bridge (or whatever) for the name. Select "MBS Bridge" for the type. 
 4. Configure the "MQTT Bridge" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the mbs-server processm service or docker container
 5. If ST is receiving messages from the bridge but the bridge is not receiving any messages from ST then most liley IP Address, Port, and MAC Address configuration is not correct
