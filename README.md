@@ -171,11 +171,18 @@ If you are interested in running it on windows as a server the windows service d
 2. Install the [MBS-Bridge Device Handler](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/devicetypes/gupta/mqtt/mbs-bridge.src/mbs-bridge.groovy) in the [Device Handler IDE][ide-dt] using "Create via code"
 3. Add the "MQTT Bridge" device in the [My Devices IDE][ide-mydev]. Enter MQTT Bridge (or whatever) for the name. Select "MBS Bridge" for the type. 
 4. Configure the "MQTT Bridge" in the [My Devices IDE][ide-mydev] with the IP Address, Port, and MAC Address of the machine running the mbs-server processm service or docker container
-5. If ST is receiving messages from the bridge but the bridge is not receiving any messages from ST then most liley IP Address, Port, and MAC Address configuration is not correct
-6. Install the [MBS SmartApp Lite](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-lite.groovy) or [MBS SmartApp Full](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mbs-smartapp.src/mbs-smartapp-full.groovy)on the [Smart App IDE][ide-app] using "Create via code"
+5. If ST is receiving messages from the bridge but the bridge is not receiving any messages from ST then most likely IP Address, Port, and MAC Address configuration are not correct
+6. Install the [MBS SmartApp Lite](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mqtt/mbs-smartapp.src/mbs-smartapp-lite.groovy) or [MBS SmartApp Full](https://github.com/sgupta999/mqtt-bridge-smartthings/blob/master/smartapps/gupta/mqtt/mbs-smartapp.src/mbs-smartapp-full.groovy) on the [Smart App IDE][ide-app] using "Create From Code"
 7. If using a Tasmota device install the [Tasmota SwitchSensor] or any other Tamota device from the [Tasmota Device Type] folder.
 8. Configure the Smart App (via the Native App) with the devices you want to subscribe to and the bridge that you just installed
 9. Via the Native App, select your MQTT device and watch as device is populated with events from your devices
 
-
+ [dt]: https://github.com/stjohnjohnson/smartthings-mqtt-bridge/blob/master/devicetypes/stj/mqtt-bridge.src/mqtt-bridge.groovy
+ [app]: https://github.com/stjohnjohnson/smartthings-mqtt-bridge/blob/master/smartapps/stj/mqtt-bridge.src/mqtt-bridge.groovy
+ [ide-dt]: https://graph.api.smartthings.com/ide/devices
+ [ide-mydev]: https://graph.api.smartthings.com/device/list
+ [ide-app]: https://graph.api.smartthings.com/ide/apps
+ [ha-issue]: https://github.com/balloob/home-assistant/issues/604
+ [docker-compose]: https://docs.docker.com/compose/
+ [pm2]: http://pm2.keymetrics.io/
 
